@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Star } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 const testimonials = [
   {
@@ -53,13 +54,14 @@ export default function AutoTestimonials() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
-  // Auto-scroll functionality
+  // Auto-scroll functionality with reduced frequency for performance
   useEffect(() => {
     if (!isPaused) {
       intervalRef.current = setInterval(() => {
         setActiveIndex((prevIndex) => (prevIndex + 1) % testimonials.length)
-      }, 5000)
+      }, 6000) // Increased from 5000 to 6000ms for better performance
     }
 
     return () => {
@@ -69,34 +71,50 @@ export default function AutoTestimonials() {
     }
   }, [isPaused])
 
-  // Pause on hover
+  // Pause on hover or touch
   const handleMouseEnter = () => setIsPaused(true)
   const handleMouseLeave = () => setIsPaused(false)
 
-  return (
-    <section className="py-16 bg-muted/30">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold mb-12 text-center">What Our Clients Say</h2>
+  // Simplified animation for mobile
+  const animationProps = isMobile
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.3 },
+      }
+    : {
+        initial: { opacity: 0, y: 20 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -20 },
+        transition: { duration: 0.5 },
+      }
 
-        <div className="relative max-w-4xl mx-auto" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+  return (
+    <section className="py-12 md:py-16 bg-muted/30">
+      <div className="container mx-auto px-4">
+        <h2 className="text-2xl md:text-3xl font-bold mb-8 md:mb-12 text-center">What Our Clients Say</h2>
+
+        <div
+          className="relative max-w-4xl mx-auto"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onTouchStart={handleMouseEnter}
+          onTouchEnd={handleMouseLeave}
+        >
           <AnimatePresence mode="wait">
-            <motion.div
-              key={activeIndex}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              className="relative"
-            >
+            <motion.div key={activeIndex} {...animationProps} className="relative">
               <Card className="border-none shadow-lg">
-                <CardContent className="p-8">
-                  <div className="flex flex-col md:flex-row items-center gap-6">
-                    <div className="relative w-24 h-24 rounded-full overflow-hidden flex-shrink-0">
+                <CardContent className="p-6 md:p-8">
+                  <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
+                    <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden flex-shrink-0">
                       <Image
                         src={testimonials[activeIndex].image || "/placeholder.svg"}
                         alt={testimonials[activeIndex].name}
                         fill
                         className="object-cover"
+                        sizes="(max-width: 768px) 80px, 96px"
+                        priority
                       />
                     </div>
                     <div className="flex-grow text-center md:text-left">
@@ -104,16 +122,16 @@ export default function AutoTestimonials() {
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-5 w-5 ${
+                            className={`h-4 w-4 md:h-5 md:w-5 ${
                               i < testimonials[activeIndex].rating ? "text-yellow-500 fill-yellow-500" : "text-muted"
                             }`}
                           />
                         ))}
                       </div>
-                      <p className="text-lg italic mb-4">"{testimonials[activeIndex].text}"</p>
+                      <p className="text-base md:text-lg italic mb-4">"{testimonials[activeIndex].text}"</p>
                       <div>
-                        <p className="font-semibold text-lg">{testimonials[activeIndex].name}</p>
-                        <p className="text-muted-foreground">{testimonials[activeIndex].role}</p>
+                        <p className="font-semibold text-base md:text-lg">{testimonials[activeIndex].name}</p>
+                        <p className="text-muted-foreground text-sm">{testimonials[activeIndex].role}</p>
                       </div>
                     </div>
                   </div>
@@ -127,7 +145,7 @@ export default function AutoTestimonials() {
               <button
                 key={index}
                 onClick={() => setActiveIndex(index)}
-                className={`w-3 h-3 rounded-full transition-colors ${
+                className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors ${
                   index === activeIndex ? "bg-primary" : "bg-muted-foreground/30"
                 }`}
                 aria-label={`Go to testimonial ${index + 1}`}

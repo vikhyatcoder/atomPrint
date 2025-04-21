@@ -1,10 +1,12 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { useRef } from "react"
+import { motion, useInView } from "framer-motion"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CuboidIcon as Cube, Lightbulb, Gift, GraduationCap, Factory, Building2 } from "lucide-react"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 const services = [
   {
@@ -58,31 +60,42 @@ const services = [
 ]
 
 export default function Services() {
+  const isMobile = useMediaQuery("(max-width: 768px)")
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true, amount: 0.1 })
+
+  // Reduce animation complexity on mobile
+  const animationProps = isMobile
+    ? {
+        initial: { opacity: 0 },
+        animate: isInView ? { opacity: 1 } : { opacity: 0 },
+        transition: { duration: 0.3 },
+      }
+    : {
+        initial: { opacity: 0, y: 20 },
+        animate: isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 },
+        transition: { duration: 0.5 },
+      }
+
   return (
-    <section className="py-24">
+    <section className="py-16 md:py-24" ref={ref}>
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Services</h2>
-            <p className="text-lg text-muted-foreground">
+        <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
+          <motion.div {...animationProps}>
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">Our Services</h2>
+            <p className="text-base lg:text-lg text-muted-foreground">
               We offer a wide range of 3D printing services to bring your ideas to life.
             </p>
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {services.map((service, index) => (
             <motion.div
               key={service.id}
               initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.5, delay: isMobile ? 0 : index * 0.1 }}
             >
               <Card className="h-full border transition-all duration-300 hover:shadow-lg hover:border-primary/50">
                 <CardHeader>
@@ -104,7 +117,7 @@ export default function Services() {
           ))}
         </div>
 
-        <div className="text-center mt-12">
+        <div className="text-center mt-10 md:mt-12">
           <Button asChild size="lg">
             <Link href="/services">View All Services</Link>
           </Button>
