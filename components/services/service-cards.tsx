@@ -28,44 +28,38 @@ const services = [
     color: "text-secondary",
     bgColor: "bg-secondary/10",
     popular: true,
-    features: [
-      "Rapid action features",
-      "Iterative design support",
-      "Designing consultations",
-      "Functional prototypes",
-
-    ],
+    features: ["Rapid action features", "Iterative design support", "Designing consultations", "Functional prototypes"],
   },
   {
     id: 3,
     title: "Personalized Gifts & Decor",
-    description: "Create unique and creative printings for special occasions and home décor to capture the moment and live the moment through the window of memories",
+    description:
+      "Create unique and creative printings for special occasions and home décor to capture the moment and live the moment through the window of memories",
     icon: Gift,
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
     popular: false,
-    features: ["Custom Designing support"
-	"Various gift options and color options are available"
-	"Custom text and design printing"
-	"Designing based on requirements"
-],
+    features: [
+      "Custom Designing support",
+      "Various gift options and color options are available",
+      "Custom text and design printing",
+      "Designing based on requirements",
+    ],
   },
   {
     id: 4,
     title: "Educational Models",
-    description: "Detailed model printings based on anatomic and conceptual models for research and educational purposes\n
-Based on the required subjects and required domains, printing options are available
-",
+    description:
+      "Detailed model printings based on anatomic and conceptual models for research and educational purposes\nBased on the required subjects and required domains, printing options are available\n",
     icon: GraduationCap,
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
     popular: false,
     features: [
-      "Anatomically correct modeling"
-"Research models"
-"Bulk discounts on classrooms"
-"24/7 consultancy for educational provinces"
-
+      "Anatomically correct modeling",
+      "Research models",
+      "Bulk discounts on classrooms",
+      "24/7 consultancy for educational provinces",
     ],
   },
   {
