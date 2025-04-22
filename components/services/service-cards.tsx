@@ -23,43 +23,49 @@ const services = [
   {
     id: 2,
     title: "Prototyping for Startups",
-    description: "Rapid prototyping solutions to bring your product ideas to life quickly.",
+    description: "Shape your 3D models into physical objects with your custom ideas and precision",
     icon: Lightbulb,
     color: "text-secondary",
     bgColor: "bg-secondary/10",
     popular: true,
     features: [
-      "Quick turnaround times",
+      "Rapid action features",
       "Iterative design support",
+      "Designing consultations",
       "Functional prototypes",
-      "Material recommendations",
-      "Design consultation",
+
     ],
   },
   {
     id: 3,
     title: "Personalized Gifts & Decor",
-    description: "Create unique, personalized items for special occasions or home decor.",
+    description: "Create unique and creative printings for special occasions and home décor to capture the moment and live the moment through the window of memories",
     icon: Gift,
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
     popular: false,
-    features: ["Custom text and designs", "Photo-based models", "Gift packaging available", "Various color options"],
+    features: ["Custom Designing support"
+	"Various gift options and color options are available"
+	"Custom text and design printing"
+	"Designing based on requirements"
+],
   },
   {
     id: 4,
     title: "Educational Models",
-    description: "Detailed anatomical, molecular, or conceptual models for educational purposes.",
+    description: "Detailed model printings based on anatomic and conceptual models for research and educational purposes\n
+Based on the required subjects and required domains, printing options are available
+",
     icon: GraduationCap,
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
     popular: false,
     features: [
-      "Anatomically correct models",
-      "Molecular structures",
-      "Geographic models",
-      "Historical replicas",
-      "Bulk discounts for classrooms",
+      "Anatomically correct modeling"
+"Research models"
+"Bulk discounts on classrooms"
+"24/7 consultancy for educational provinces"
+
     ],
   },
   {
