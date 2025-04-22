@@ -7,16 +7,17 @@ const services = [
   {
     id: 1,
     title: "Custom Model Printing",
-    description: "Turn your 3D models into physical objects with precision and quality.",
+    description: "A lot of options are available for printing with multiple qualities of PLA/Filament, giving a wholesome experience for your custom printings",
     icon: Cube,
     color: "text-primary",
     bgColor: "bg-primary/10",
     popular: false,
     features: [
-      "High-quality prints from your STL/OBJ files",
-      "Multiple material options",
-      "Various finish options",
-      "Size adjustments available",
+      "High-quality STL/OBJ uploads!"
+    	"Scale and size alterations"
+  	  "Industrial-grade printing quality"
+      "Multiple finishing options available"
+
     ],
   },
   {
