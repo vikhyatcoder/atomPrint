@@ -1,16 +1,16 @@
 "use client"
 
-import { Suspense } from "react"
-import Stats from "@/components/home/stats"
-import Services from "@/components/home/services"
-import FeaturedProjects from "@/components/home/featured-projects"
-import BlogPreview from "@/components/home/blog-preview"
-import AIFeatures from "@/components/home/ai-features"
-import NewsletterSignup from "@/components/newsletter-signup"
-import AutoTestimonials from "@/components/home/auto-testimonials"
+import { Suspense, useEffect, useState } from "react"
+import { useDeviceCapabilities } from "@/hooks/use-device-capabilities"
+import { usePerformanceMonitor } from "@/hooks/use-performance-monitor"
 import dynamic from "next/dynamic"
 
-// Use dynamic import for components that might cause hydration issues
+// Eagerly loaded components
+import NewsletterSignup from "@/components/newsletter-signup"
+
+// Dynamically import components with different loading priorities
+const Stats = dynamic(() => import("@/components/home/stats"), { ssr: false })
+const Services = dynamic(() => import("@/components/home/services"), { ssr: false })
 const DynamicHero = dynamic(() => import("@/components/home/hero"), {
   ssr: false,
   loading: () => (
@@ -20,18 +20,77 @@ const DynamicHero = dynamic(() => import("@/components/home/hero"), {
   ),
 })
 
+// Lower priority components loaded after initial render
+const FeaturedProjects = dynamic(() => import("@/components/home/featured-projects"), {
+  ssr: false,
+  loading: () => <div className="py-24 bg-muted/30" aria-label="Loading featured projects"></div>,
+})
+const AutoTestimonials = dynamic(() => import("@/components/home/auto-testimonials"), {
+  ssr: false,
+  loading: () => <div className="py-12 bg-muted/30" aria-label="Loading testimonials"></div>,
+})
+const BlogPreview = dynamic(() => import("@/components/home/blog-preview"), {
+  ssr: false,
+  loading: () => <div className="py-24" aria-label="Loading blog preview"></div>,
+})
+const AIFeatures = dynamic(() => import("@/components/home/ai-features"), {
+  ssr: false,
+  loading: () => <div className="py-24 bg-muted/30" aria-label="Loading AI features"></div>,
+})
+
 export default function HomeClient() {
+  const { isLowEndDevice } = useDeviceCapabilities()
+  const { isLowPerformance } = usePerformanceMonitor()
+  const [mounted, setMounted] = useState(false)
+  const [loadSecondary, setLoadSecondary] = useState(false)
+
+  // Detect if we should reduce features
+  const reduceFeatures = isLowEndDevice || isLowPerformance
+
+  // Mount component safely
+  useEffect(() => {
+    setMounted(true)
+
+    // Defer loading of secondary components
+    const timer = setTimeout(
+      () => {
+        setLoadSecondary(true)
+      },
+      reduceFeatures ? 2000 : 1000,
+    )
+
+    return () => clearTimeout(timer)
+  }, [reduceFeatures])
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse-slow text-primary text-xl">Loading...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen">
       <Suspense fallback={<div className="min-h-screen"></div>}>
         <DynamicHero />
       </Suspense>
+
+      {/* Primary content - always loaded */}
       <Stats />
       <Services />
-      <FeaturedProjects />
-      <AutoTestimonials />
-      <BlogPreview />
-      <AIFeatures />
+
+      {/* Secondary content - conditionally loaded */}
+      {loadSecondary && (
+        <>
+          <FeaturedProjects />
+          <AutoTestimonials />
+          <BlogPreview />
+          <AIFeatures />
+        </>
+      )}
+
+      {/* Always load the newsletter signup as it's lightweight */}
       <NewsletterSignup />
     </div>
   )

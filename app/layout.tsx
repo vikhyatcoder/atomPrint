@@ -5,7 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
-import WhatsAppButton from "@/components/whatsapp-button"
+import WhatsAppButtonWrapper from "@/components/whatsapp-button-wrapper"
 
 // Configure the font with display swap for better performance
 const montserrat = Montserrat({
@@ -38,13 +38,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={montserrat.variable}>
+      <head>
+        {/* Preload critical assets */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+
+        {/* Add preload hints for critical resources */}
+        <link rel="preload" as="image" href="/placeholder.svg?height=200&width=200" />
+
+        {/* Add resource hints */}
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+      </head>
       <body className="font-sans">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <div className="flex min-h-screen flex-col">
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
-            <WhatsAppButton />
+            <WhatsAppButtonWrapper />
           </div>
         </ThemeProvider>
       </body>

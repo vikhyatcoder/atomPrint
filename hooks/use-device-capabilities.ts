@@ -10,6 +10,8 @@ interface DeviceCapabilities {
   devicePixelRatio: number
   effectiveType: string
   saveData: boolean
+  cpuCores: number
+  memory: number
 }
 
 export function useDeviceCapabilities(): DeviceCapabilities {
@@ -21,6 +23,8 @@ export function useDeviceCapabilities(): DeviceCapabilities {
     devicePixelRatio: 1,
     effectiveType: "4g",
     saveData: false,
+    cpuCores: 4,
+    memory: 4,
   })
 
   useEffect(() => {
@@ -33,6 +37,12 @@ export function useDeviceCapabilities(): DeviceCapabilities {
       const canvas = document.createElement("canvas")
       const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl")
       hasWebGL = !!gl
+
+      // Clean up
+      if (gl) {
+        const ext = gl.getExtension("WEBGL_lose_context")
+        if (ext) ext.loseContext()
+      }
     } catch (e) {
       hasWebGL = false
     }
@@ -59,16 +69,33 @@ export function useDeviceCapabilities(): DeviceCapabilities {
       browserName = "edge"
     }
 
+    // Get CPU cores
+    // @ts-ignore
+    const cpuCores = navigator.hardwareConcurrency || 2
+
+    // Get memory (in GB)
+    // @ts-ignore
+    const memory = navigator.deviceMemory || 4
+
+    // Performance test - measure time to execute a simple task
+    const startTime = performance.now()
+    let result = 0
+    for (let i = 0; i < 1000000; i++) {
+      result += i
+    }
+    const endTime = performance.now()
+    const executionTime = endTime - startTime
+
     // Check for low-end device
     const isLowEndDevice =
       // Low memory (less than 4GB)
-      // @ts-ignore
-      (navigator.deviceMemory && navigator.deviceMemory < 4) ||
+      memory < 4 ||
       // Low CPU cores (less than 4)
-      // @ts-ignore
-      (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) ||
+      cpuCores < 4 ||
       // Low DPR
       window.devicePixelRatio < 2 ||
+      // Slow execution time
+      executionTime > 100 ||
       // Mobile device
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
@@ -92,6 +119,8 @@ export function useDeviceCapabilities(): DeviceCapabilities {
       devicePixelRatio: window.devicePixelRatio,
       effectiveType,
       saveData,
+      cpuCores,
+      memory,
     })
   }, [])
 

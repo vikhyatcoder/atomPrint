@@ -28,19 +28,26 @@ export default function Navbar() {
 
   // Debounced scroll handler for better performance
   const handleScroll = useCallback(() => {
-    const scrollPosition = window.scrollY
-    setIsScrolled(scrollPosition > 10)
-  }, [])
+    if (window.scrollY > 10 && !isScrolled) {
+      setIsScrolled(true)
+    } else if (window.scrollY <= 10 && isScrolled) {
+      setIsScrolled(false)
+    }
+  }, [isScrolled])
 
-  // Handle scroll effect with debounce
+  // Handle scroll effect with debounce and requestAnimationFrame
   useEffect(() => {
     let scrollTimer: number | null = null
+    let isScrolling = false
 
     const debouncedScroll = () => {
-      if (scrollTimer !== null) {
-        window.cancelAnimationFrame(scrollTimer)
+      if (!isScrolling) {
+        isScrolling = true
+        scrollTimer = window.requestAnimationFrame(() => {
+          handleScroll()
+          isScrolling = false
+        })
       }
-      scrollTimer = window.requestAnimationFrame(handleScroll)
     }
 
     window.addEventListener("scroll", debouncedScroll, { passive: true })
@@ -68,6 +75,19 @@ export default function Navbar() {
       document.body.style.overflow = ""
     }
   }, [mobileMenuOpen])
+
+  // Simplified animation variants for better performance
+  const menuItemVariants = {
+    hidden: { opacity: 0, x: isMobile ? -10 : -20 },
+    visible: (i) => ({
+      opacity: 1,
+      x: 0,
+      transition: {
+        delay: isMobile ? 0.05 * i : 0.05 * i,
+        duration: 0.2,
+      },
+    }),
+  }
 
   return (
     <header
@@ -119,9 +139,9 @@ export default function Navbar() {
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={mobileMenuOpen ? "close" : "menu"}
-                initial={{ opacity: 0, rotate: mobileMenuOpen ? -90 : 90 }}
+                initial={{ opacity: 0, rotate: mobileMenuOpen ? -45 : 45 }}
                 animate={{ opacity: 1, rotate: 0 }}
-                exit={{ opacity: 0, rotate: mobileMenuOpen ? 90 : -90 }}
+                exit={{ opacity: 0, rotate: mobileMenuOpen ? 45 : -45 }}
                 transition={{ duration: 0.2 }}
               >
                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -135,7 +155,7 @@ export default function Navbar() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            className="md:hidden bg-background/95 backdrop-blur-md fixed inset-0 top-[72px] z-40 overflow-y-auto"
+            className="md:hidden bg-background/95 backdrop-blur-md fixed inset-0 top-[72px] z-40 mobile-nav-container"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "calc(100vh - 72px)" }}
             exit={{ opacity: 0, height: 0 }}
@@ -146,9 +166,10 @@ export default function Navbar() {
                 {navigation.map((item, index) => (
                   <motion.div
                     key={item.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.2, delay: index * 0.05 }}
+                    custom={index}
+                    variants={menuItemVariants}
+                    initial="hidden"
+                    animate="visible"
                   >
                     <Link
                       href={item.href}
@@ -166,7 +187,7 @@ export default function Navbar() {
               </div>
               <div className="mt-auto pb-8">
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: navigation.length * 0.05 }}
                 >

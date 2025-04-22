@@ -1,27 +1,53 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 
-export function useLazyLoad(threshold = 0.1): [boolean, (node: any) => void] {
+interface UseLazyLoadOptions {
+  threshold?: number
+  rootMargin?: string
+  enabled?: boolean
+}
+
+export function useLazyLoad(options: UseLazyLoadOptions = {}): [boolean, (node: Element | null) => void] {
+  const { threshold = 0.1, rootMargin = "200px 0px", enabled = true } = options
+
   const [inView, setInView] = useState(false)
   const [node, setNode] = useState<Element | null>(null)
+  const observerRef = useRef<IntersectionObserver | null>(null)
 
   useEffect(() => {
-    if (!node) return
+    // Skip if disabled or no node
+    if (!enabled || !node) return
 
-    const observer = new IntersectionObserver(
+    // Cleanup previous observer
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+    }
+
+    // Create new observer with optimized options
+    observerRef.current = new IntersectionObserver(
       ([entry]) => {
-        setInView(entry.isIntersecting)
+        // Only update state if it changes
+        if (entry.isIntersecting !== inView) {
+          setInView(entry.isIntersecting)
+        }
+
+        // Once element is in view, stop observing for better performance
+        if (entry.isIntersecting && observerRef.current) {
+          observerRef.current.unobserve(node)
+        }
       },
-      { threshold },
+      { threshold, rootMargin },
     )
 
-    observer.observe(node)
+    observerRef.current.observe(node)
 
     return () => {
-      observer.disconnect()
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
     }
-  }, [node, threshold])
+  }, [node, threshold, rootMargin, enabled, inView])
 
   return [inView, setNode]
 }
