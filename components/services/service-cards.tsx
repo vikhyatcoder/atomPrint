@@ -8,8 +8,7 @@ const services = [
     id: 1,
     title: "Custom Model Printing",
     description:
-      "Shape your 3D models into physical objects with precision.",
-      " A lot of options are available for printing with multiple qualities of PLA/Filament, giving a wholesome experience for your custom printings.",
+      "Shape your 3D models into physical objects with precision.\n A lot of options are available for printing with multiple qualities of PLA/Filament, giving a wholesome experience for your custom printings.",
     icon: Cube,
     color: "text-primary",
     bgColor: "bg-primary/10",
