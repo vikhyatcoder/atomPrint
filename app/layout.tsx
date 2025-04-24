@@ -18,9 +18,9 @@ const montserrat = Montserrat({
 })
 
 export const metadata: Metadata = {
-  title: "Atom Print | Student-Run 3D Printing Startup",
+  title: "Atom Prints| Your all 3D printing solutions at a single stop",
   description:
-    "Turn your creative ideas into tangible 3D prints with Atom Print - a student-run 3D printing service offering prototyping, decor, educational models, and personalized gifts.",
+    "Atom Prints is a firm that deals within the domain of 3D printing and high-quality modelling solutions, where we offer multiple domains like architectural, educational, industrial, and many more of We want to explore and just dive into the world of Atom Prints",
   keywords:
     "3D printing, student startup, prototyping, custom prints, 3D models, educational models, personalized gifts",
   viewport: "width=device-width, initial-scale=1, maximum-scale=5",

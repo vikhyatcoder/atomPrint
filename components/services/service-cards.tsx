@@ -65,7 +65,8 @@ const services = [
   {
     id: 5,
     title: "Industrial & Functional Parts",
-    description: "Durable, precise components for industrial applications and replacements.",
+    description:
+      "High-quality, durable printing techniques are used for the production of components for industrial replacements and applications",
     icon: Factory,
     color: "text-amber-500",
     bgColor: "bg-amber-500/10",
