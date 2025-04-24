@@ -72,59 +72,55 @@ const services = [
     bgColor: "bg-amber-500/10",
     popular: false,
     features: [
-      "High-strength materials",
-      "Precise tolerances",
-      "Replacement parts",
-      "Custom fixtures and tools",
-      "Heat-resistant options",
+      "High tensile strength"
+"Heat resistance"
+"Replacement parts"
+"Custom tools",
     ],
   },
   {
     id: 6,
     title: "Architectural Models",
-    description: "Detailed scale models of buildings, landscapes, and urban designs.",
+    description: "High tensile strength Heat resistance Replacement parts Custom tools.",
     icon: Building2,
     color: "text-teal-500",
     bgColor: "bg-teal-500/10",
     popular: false,
     features: [
-      "Accurate scaling",
-      "Landscape integration",
-      "Multiple building sets",
-      "Color-coded sections",
-      "Display bases available",
+      "Detailed and accurate scaling" 
+"Color-coded sections", 
+"Landmarks and bases are visible"
+"valid for multiple architectural tests "
+,
     ],
   },
   {
     id: 7,
     title: "Art & Sculptures",
-    description: "Turn digital art into physical sculptures and artistic pieces.",
+    description: "Tune up your art style and bring it to new life via printing your digital art into a physical form",
     icon: Palette,
     color: "text-pink-500",
     bgColor: "bg-pink-500/10",
     popular: false,
     features: [
-      "High-detail printing",
-      "Artist collaborations",
-      "Custom finishes",
-      "Exhibition-ready pieces",
-      "Limited edition options",
+      "Detailed art prints"
+"Collaborations with artists"
+"Limited edition prints option available" 
+"Custom finishers",
     ],
   },
   {
     id: 8,
     title: "Design Services",
-    description: "Don't have a 3D model? Our team can design one based on your specifications.",
+    description: "Want a 3D model? Our team is yours to design based on your provided specifications, and can be more tuned via other features",
     icon: Cog,
     color: "text-indigo-500",
     bgColor: "bg-indigo-500/10",
     popular: false,
     features: [
-      "Concept sketches",
-      "3D modeling",
-      "Design revisions",
-      "Technical specifications",
-      "File preparation for printing",
+      "3D modelling"
+"Concept arts"
+"Design revisions" ,
     ],
   },
 ]
