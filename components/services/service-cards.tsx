@@ -71,12 +71,7 @@ const services = [
     color: "text-amber-500",
     bgColor: "bg-amber-500/10",
     popular: false,
-    features: [
-      "High tensile strength"
-"Heat resistance"
-"Replacement parts"
-"Custom tools",
-    ],
+    features: ["High tensile strength", "Heat resistance", "Replacement parts", "Custom tools"],
   },
   {
     id: 6,
@@ -87,11 +82,10 @@ const services = [
     bgColor: "bg-teal-500/10",
     popular: false,
     features: [
-      "Detailed and accurate scaling" 
-"Color-coded sections", 
-"Landmarks and bases are visible"
-"valid for multiple architectural tests "
-,
+      "Detailed and accurate scaling",
+      "Color-coded sections",
+      "Landmarks and bases are visible",
+      "Valid for multiple architectural tests",
     ],
   },
   {
@@ -103,25 +97,22 @@ const services = [
     bgColor: "bg-pink-500/10",
     popular: false,
     features: [
-      "Detailed art prints"
-"Collaborations with artists"
-"Limited edition prints option available" 
-"Custom finishers",
+      "Detailed art prints",
+      "Collaborations with artists",
+      "Limited edition prints option available",
+      "Custom finishers",
     ],
   },
   {
     id: 8,
     title: "Design Services",
-    description: "Want a 3D model? Our team is yours to design based on your provided specifications, and can be more tuned via other features",
+    description:
+      "Want a 3D model? Our team is yours to design based on your provided specifications, and can be more tuned via other features",
     icon: Cog,
     color: "text-indigo-500",
     bgColor: "bg-indigo-500/10",
     popular: false,
-    features: [
-      "3D modelling"
-"Concept arts"
-"Design revisions" ,
-    ],
+    features: ["3D modelling", "Concept arts", "Design revisions"],
   },
 ]
 
