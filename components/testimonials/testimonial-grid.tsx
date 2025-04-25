@@ -11,7 +11,7 @@ const testimonials = [
   {
     id: 1,
     name: "Sandeep Mishra",
-    role: "Engineering Student",
+    role: "IT Employee",
     image: "/placeholder.svg?height=200&width=200",
     rating: 4,
     text: "I loved working with Atom Print. I just got my hands on my print and would like to say something about the quality. I would also recommend it to others.",
@@ -21,7 +21,7 @@ const testimonials = [
   {
     id: 2,
     name: "Pavan Singh Sisodia",
-    role: "Engineering Student",
+    role: "Mechanical Engineer",
     image: "/placeholder.svg?height=200&width=200",
     rating: 5,
     text: "I customised a print of my car and got it within a few days of ordering, and the quality of the print can be seen in the details of the print are fabulous",
@@ -31,7 +31,7 @@ const testimonials = [
   {
     id: 3,
     name: "Anamika Sharma",
-    role: "Biology Professor",
+    role: "Bussiness Owner",
     image: "/placeholder.svg?height=200&width=200",
     rating: 3,
     text: "Ordered a custom model for gifting purposes and would recommend to all b’cuz of the personalisation and the design language",
@@ -41,7 +41,7 @@ const testimonials = [
   {
     id: 4,
     name: "Sajiya Tanwar ",
-    role: "Architecture Student",
+    role: "Mechanics Professor",
     image: "/placeholder.svg?height=200&width=200",
     rating: 4,
     text: "Working as a professor, and had ordered a 3D model to gain a better understanding of students, and all I wanted was to say that the details just got me through, and we are going to order some more models too",
