@@ -76,7 +76,7 @@ const services = [
   {
     id: 6,
     title: "Architectural Models",
-    description: "High tensile strength Heat resistance Replacement parts Custom tools.",
+    description: "Detailed scale models of buildings, landscapes, and urban designs with high precision.",
     icon: Building2,
     color: "text-teal-500",
     bgColor: "bg-teal-500/10",

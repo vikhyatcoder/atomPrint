@@ -94,28 +94,6 @@ const portfolioItems = [
     material: "White PLA",
     printTime: "3 hours",
   },
-  {
-    id: 8,
-    title: "Molecular Structure Set",
-    category: "Education",
-    tags: ["education", "science"],
-    image: "/placeholder.svg?height=600&width=800",
-    description: "A set of 15 different molecular structures for chemistry education, with connecting pieces.",
-    client: "Chemistry Department",
-    material: "PETG",
-    printTime: "48 hours",
-  },
-  {
-    id: 9,
-    title: "Custom Chess Set",
-    category: "Art & Gifts",
-    tags: ["art", "gifts"],
-    image: "/placeholder.svg?height=600&width=800",
-    description: "A custom-designed chess set with pieces inspired by modern architecture.",
-    client: "Chess Club",
-    material: "Resin",
-    printTime: "24 hours",
-  },
 ]
 
 export default function PortfolioGrid() {
