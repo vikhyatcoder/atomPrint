@@ -43,7 +43,7 @@ const projects = [
     id: 3,
     title: "Robotic Arm Prototype",
     category: "Prototyping",
-    image: "/placeholder.svg?height=600&width=800",
+    image: "/images/robotic-arm.jpg",
     description: "A functional prototype of a robotic arm with articulating joints and mounting hardware.",
     client: "Engineering Senior Project",
     material: "ABS",
