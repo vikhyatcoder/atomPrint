@@ -15,12 +15,13 @@ interface PortfolioFiltersProps {
 const filters = [
   { id: "all", label: "All Projects" },
   { id: "architecture", label: "Architecture" },
+  { id: "residential", label: "Residential" },
+  { id: "engineering", label: "Engineering" },
+  { id: "robotics", label: "Robotics" },
   { id: "education", label: "Education" },
-  { id: "prototypes", label: "Prototypes" },
   { id: "art", label: "Art & Gifts" },
-  { id: "tools", label: "Tools" },
   { id: "toys", label: "Toys & Games" },
-  { id: "science", label: "Science" },
+  { id: "functional", label: "Functional" },
 ]
 
 export default function PortfolioFilters({ onFilterChange, onSearchChange }: PortfolioFiltersProps) {
