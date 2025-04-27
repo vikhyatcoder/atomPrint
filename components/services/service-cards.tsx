@@ -146,7 +146,6 @@ export default function ServiceCards() {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button className="w-full">Get Started</Button>
           </CardFooter>
         </Card>
       ))}

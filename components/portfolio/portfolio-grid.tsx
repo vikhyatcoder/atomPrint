@@ -267,12 +267,6 @@ export default function PortfolioGrid() {
                   </div>
                 </TabsContent>
               </Tabs>
-
-              <div className="flex justify-end mt-4">
-                <Button asChild>
-                  <a href="/services">Request Similar Project</a>
-                </Button>
-              </div>
             </>
           )}
         </DialogContent>
