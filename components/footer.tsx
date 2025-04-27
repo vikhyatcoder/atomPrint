@@ -19,21 +19,9 @@ export default function Footer() {
               A student-run 3D printing startup turning creative ideas into tangible prints.
             </p>
             <div className="flex space-x-4">
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                <Facebook className="h-5 w-5" />
-                <span className="sr-only">Facebook</span>
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              <Link href="https://www.instagram.com/atom_print_?igsh=MmVuanF2bjJvdjRu" className="text-muted-foreground hover:text-primary transition-colors">
                 <Instagram className="h-5 w-5" />
                 <span className="sr-only">Instagram</span>
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                <Twitter className="h-5 w-5" />
-                <span className="sr-only">Twitter</span>
-              </Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                <Linkedin className="h-5 w-5" />
-                <span className="sr-only">LinkedIn</span>
               </Link>
             </div>
           </div>
@@ -74,11 +62,11 @@ export default function Footer() {
             <ul className="space-y-2">
               <li className="flex items-center text-muted-foreground">
                 <Phone className="h-4 w-4 mr-2" />
-                <span>+1 (555) 123-4567</span>
+                <span>+91 72308 24524</span>
               </li>
               <li className="flex items-center text-muted-foreground">
                 <Mail className="h-4 w-4 mr-2" />
-                <span>info@atomprint.com</span>
+                <span>atom.print05@gmail.com</span>
               </li>
               <li className="flex items-start text-muted-foreground">
                 <MapPin className="h-4 w-4 mr-2 mt-1" />

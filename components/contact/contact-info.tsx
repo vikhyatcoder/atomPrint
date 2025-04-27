@@ -15,7 +15,7 @@ export default function ContactInfo() {
           </div>
           <div>
             <h3 className="font-medium mb-1">Phone</h3>
-            <p className="text-lg">+1 (555) 123-4567</p>
+            <p className="text-lg">+91 72308 24524</p>
             <p className="text-sm text-muted-foreground">Monday-Friday, 9am-5pm</p>
           </div>
         </div>
@@ -26,7 +26,7 @@ export default function ContactInfo() {
           </div>
           <div>
             <h3 className="font-medium mb-1">Email</h3>
-            <p className="text-lg">info@atomprint.com</p>
+            <p className="text-lg">atom.print05@gmail.com</p>
             <p className="text-sm text-muted-foreground">We respond within 24 hours</p>
           </div>
         </div>
