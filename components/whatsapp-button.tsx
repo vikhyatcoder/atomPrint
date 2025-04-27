@@ -8,7 +8,7 @@ export default function WhatsAppButton() {
   const [isOpen, setIsOpen] = useState(false)
 
   const handleWhatsAppClick = () => {
-    window.open("https://wa.me/72308 24524", "_blank")
+    window.open("https://wa.me/7230824524", "_blank")
     setIsOpen(false)
   }
 
