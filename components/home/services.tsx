@@ -108,9 +108,6 @@ export default function Services() {
                   <p className="text-muted-foreground">{service.description}</p>
                 </CardContent>
                 <CardFooter>
-                  <Button asChild variant="ghost" className="mt-2">
-                    <Link href="/services">Learn More</Link>
-                  </Button>
                 </CardFooter>
               </Card>
             </motion.div>
