@@ -29,14 +29,6 @@ const AutoTestimonials = dynamic(() => import("@/components/home/auto-testimonia
   ssr: false,
   loading: () => <div className="py-12 bg-muted/30" aria-label="Loading testimonials"></div>,
 })
-const BlogPreview = dynamic(() => import("@/components/home/blog-preview"), {
-  ssr: false,
-  loading: () => <div className="py-24" aria-label="Loading blog preview"></div>,
-})
-const AIFeatures = dynamic(() => import("@/components/home/ai-features"), {
-  ssr: false,
-  loading: () => <div className="py-24 bg-muted/30" aria-label="Loading AI features"></div>,
-})
 
 export default function HomeClient() {
   const { isLowEndDevice } = useDeviceCapabilities()
@@ -85,8 +77,6 @@ export default function HomeClient() {
         <>
           <FeaturedProjects />
           <AutoTestimonials />
-          <BlogPreview />
-          <AIFeatures />
         </>
       )}
 
