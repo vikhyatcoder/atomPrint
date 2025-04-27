@@ -37,7 +37,7 @@ export default function ContactInfo() {
           </div>
           <div>
             <h3 className="font-medium mb-1">Location</h3>
-            <p className="text-lg">123 University Ave, Campus Hub</p>
+            <p className="text-lg">D-Mart pratapnagar, Jaipur</p>
             <p className="text-sm text-muted-foreground">Suite 101, Innovation Building</p>
           </div>
         </div>
@@ -58,13 +58,6 @@ export default function ContactInfo() {
             </div>
           </div>
         </div>
-
-        <Button className="w-full" variant="outline" asChild>
-          <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer">
-            Get Directions
-            <ExternalLink className="ml-2 h-4 w-4" />
-          </a>
-        </Button>
       </CardContent>
     </Card>
   )

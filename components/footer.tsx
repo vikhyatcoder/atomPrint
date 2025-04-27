@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Facebook, Instagram, Twitter, Linkedin, Mail, Phone, MapPin } from "lucide-react"
+import { Instagram, Mail, Phone, MapPin } from "lucide-react"
 
 export default function Footer() {
   return (
@@ -19,7 +19,10 @@ export default function Footer() {
               A student-run 3D printing startup turning creative ideas into tangible prints.
             </p>
             <div className="flex space-x-4">
-              <Link href="https://www.instagram.com/atom_print_?igsh=MmVuanF2bjJvdjRu" className="text-muted-foreground hover:text-primary transition-colors">
+              <Link
+                href="https://www.instagram.com/atom_print_?igsh=MmVuanF2bjJvdjRu"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
                 <Instagram className="h-5 w-5" />
                 <span className="sr-only">Instagram</span>
               </Link>
@@ -70,18 +73,9 @@ export default function Footer() {
               </li>
               <li className="flex items-start text-muted-foreground">
                 <MapPin className="h-4 w-4 mr-2 mt-1" />
-                <span>123 University Ave, Campus Hub, Suite 101</span>
+                <span>D-Mart pratapnagar, Jaipur</span>
               </li>
             </ul>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Newsletter</h3>
-            <p className="text-muted-foreground mb-4">Subscribe to our newsletter for the latest updates and offers.</p>
-            <div className="flex space-x-2">
-              <Input type="email" placeholder="Your email" className="max-w-[220px]" />
-              <Button size="sm">Subscribe</Button>
-            </div>
           </div>
         </div>
 

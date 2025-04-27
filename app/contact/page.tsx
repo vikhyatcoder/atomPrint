@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import ContactForm from "@/components/contact/contact-form"
 import ContactInfo from "@/components/contact/contact-info"
-import Map from "@/components/contact/map"
 
 export const metadata: Metadata = {
   title: "Contact Us | Atom Print",
@@ -20,8 +19,6 @@ export default function ContactPage() {
         <ContactForm />
         <ContactInfo />
       </div>
-
-      <Map />
     </div>
   )
 }

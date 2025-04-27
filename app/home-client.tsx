@@ -5,9 +5,6 @@ import { useDeviceCapabilities } from "@/hooks/use-device-capabilities"
 import { usePerformanceMonitor } from "@/hooks/use-performance-monitor"
 import dynamic from "next/dynamic"
 
-// Eagerly loaded components
-import NewsletterSignup from "@/components/newsletter-signup"
-
 // Dynamically import components with different loading priorities
 const Stats = dynamic(() => import("@/components/home/stats"), { ssr: false })
 const Services = dynamic(() => import("@/components/home/services"), { ssr: false })
@@ -79,9 +76,6 @@ export default function HomeClient() {
           <AutoTestimonials />
         </>
       )}
-
-      {/* Always load the newsletter signup as it's lightweight */}
-      <NewsletterSignup />
     </div>
   )
 }
