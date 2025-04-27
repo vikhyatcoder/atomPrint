@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, RotateCcw } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { motion } from "framer-motion"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import dynamic from "next/dynamic"
@@ -15,7 +15,7 @@ const Model3D = dynamic(() => import("./model-3d"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center">
-      <div className="animate-pulse text-primary text-xl">Loading 3D model...</div>
+      <div className="animate-pulse-slow text-primary text-xl">Loading 3D model...</div>
     </div>
   ),
 })
@@ -33,14 +33,13 @@ const StaticHero = () => (
 )
 
 export default function Hero() {
-  const containerRef = useRef(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const isMobile = useMediaQuery("(max-width: 768px)")
   const [mounted, setMounted] = useState(false)
   const { isLowEndDevice, effectiveType } = useDeviceCapabilities()
-  const [modelError, setModelError] = useState(false)
 
   // Use static hero for very low-end devices or slow connections
-  const useStaticHero = isLowEndDevice || effectiveType === "slow-2g" || effectiveType === "2g" || modelError
+  const useStaticHero = isLowEndDevice || effectiveType === "slow-2g" || effectiveType === "2g"
 
   // Only render 3D content after component is mounted
   useEffect(() => {
@@ -55,6 +54,7 @@ export default function Hero() {
       y: 0,
       transition: {
         duration: 0.5,
+        // Reduce animation complexity on mobile
         ease: isMobile ? "easeOut" : "easeInOut",
       },
     },
@@ -91,21 +91,13 @@ export default function Hero() {
             useStaticHero ? (
               <StaticHero />
             ) : (
-              <div className="relative w-full h-full">
-                <ErrorBoundary fallback={<StaticHero />} onError={() => setModelError(true)}>
-                  <Model3D isMobile={isMobile} />
-                </ErrorBoundary>
-
-                {/* Interactive hint */}
-                <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-full p-2 shadow-md flex items-center gap-2 text-xs text-muted-foreground">
-                  <RotateCcw className="h-4 w-4" />
-                  <span>Drag to rotate</span>
-                </div>
-              </div>
+              <ErrorBoundary fallback={<StaticHero />}>
+                <Model3D isMobile={isMobile} />
+              </ErrorBoundary>
             )
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <div className="animate-pulse text-primary text-xl">Loading...</div>
+              <div className="animate-pulse-slow text-primary text-xl">Loading...</div>
             </div>
           )}
         </div>

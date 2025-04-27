@@ -2,50 +2,27 @@
 
 import { Suspense, useRef, useEffect, useState } from "react"
 import { Canvas } from "@react-three/fiber"
-import { OrbitControls, PerspectiveCamera, Environment, useGLTF } from "@react-three/drei"
-import { useFrame } from "@react-three/fiber"
+import { OrbitControls, PerspectiveCamera, Environment } from "@react-three/drei"
 import { useDeviceCapabilities } from "@/hooks/use-device-capabilities"
 
-// 3D model component
-function Model({ lowDetail }) {
-  const modelRef = useRef()
-  const { scene } = useGLTF("/models/3d-print-model.glb")
+// Simplified model with reduced complexity
+function Model(props) {
+  const mesh = useRef()
+  const { lowDetail } = props
 
-  // Simple gentle rotation animation
-  useFrame((state) => {
-    if (modelRef.current) {
-      modelRef.current.rotation.y = state.clock.getElapsedTime() * 0.15
-    }
-  })
-
-  // Apply materials optimization based on device capabilities
-  useEffect(() => {
-    if (scene) {
-      scene.traverse((node) => {
-        if (node.isMesh) {
-          // Optimize materials for low-end devices
-          if (lowDetail) {
-            node.material.roughness = 0.7
-            node.material.metalness = 0.3
-            node.castShadow = false
-            node.receiveShadow = false
-          } else {
-            node.castShadow = true
-            node.receiveShadow = true
-          }
-        }
-      })
-    }
-  }, [scene, lowDetail])
-
-  return <primitive ref={modelRef} object={scene} scale={1.5} position={[0, -0.5, 0]} />
+  return (
+    <mesh {...props} ref={mesh} castShadow receiveShadow>
+      <torusKnotGeometry args={[1, 0.3, lowDetail ? 32 : 64, lowDetail ? 8 : 16]} />
+      <meshStandardMaterial color="#ff3d81" metalness={0.5} roughness={0.2} transparent={true} opacity={1} />
+    </mesh>
+  )
 }
 
 // Fallback component for when 3D is loading
 function ModelFallback() {
   return (
     <div className="w-full h-full flex items-center justify-center">
-      <div className="animate-pulse text-primary text-xl">Loading 3D model...</div>
+      <div className="animate-pulse-slow text-primary text-xl">Loading 3D model...</div>
     </div>
   )
 }
@@ -53,22 +30,13 @@ function ModelFallback() {
 export default function Model3D({ isMobile }) {
   const { isLowEndDevice } = useDeviceCapabilities()
   const [mounted, setMounted] = useState(false)
-  const [modelError, setModelError] = useState(false)
 
   // Only render after component is mounted to avoid hydration issues
   useEffect(() => {
     setMounted(true)
-
-    // Preload the model
-    try {
-      useGLTF.preload("/models/3d-print-model.glb")
-    } catch (error) {
-      console.error("Failed to preload 3D model:", error)
-      setModelError(true)
-    }
   }, [])
 
-  if (!mounted || modelError) return <ModelFallback />
+  if (!mounted) return <ModelFallback />
 
   // Determine detail level based on device capabilities
   const lowDetail = isMobile || isLowEndDevice
@@ -85,26 +53,24 @@ export default function Model3D({ isMobile }) {
           preserveDrawingBuffer: false, // Better performance
         }}
         style={{ background: "transparent" }} // Ensure transparent background
-        onError={() => setModelError(true)}
       >
         <color attach="background" args={["transparent"]} />
         <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={isMobile ? 50 : 40} />
-        <ambientLight intensity={0.5} />
+        <ambientLight intensity={0.4} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={0.8} castShadow={!lowDetail} />
-        <spotLight position={[-10, -10, -10]} angle={0.15} penumbra={1} intensity={0.4} castShadow={false} />
 
         <Suspense fallback={null}>
-          <Model lowDetail={lowDetail} />
-          <Environment preset="studio" />
+          <group rotation={[0, Math.PI / 4, 0]}>
+            <Model lowDetail={lowDetail} />
+          </group>
+          <Environment preset="city" />
         </Suspense>
 
         <OrbitControls
-          enableZoom={true}
-          zoomSpeed={0.5}
-          minZoom={0.5}
-          maxZoom={2}
+          enableZoom={false}
           enablePan={false}
-          autoRotate={false}
+          autoRotate
+          autoRotateSpeed={lowDetail ? 0.3 : 0.5} // Slower rotation for low-end devices
           enableDamping
           dampingFactor={0.05}
           rotateSpeed={0.5}
