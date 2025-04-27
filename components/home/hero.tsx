@@ -28,7 +28,7 @@ const AutoImageCarousel = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % images.length)
-    }, 5000) // Change every 5s
+    }, 3000) // Change every 5s
     return () => clearInterval(interval)
   }, [])
 
