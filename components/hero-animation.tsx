@@ -1,129 +1,158 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import { useTheme } from "next-themes"
+import { useRef, useState, useEffect } from "react"
+import { Canvas, useFrame } from "@react-three/fiber"
+import { OrbitControls, PerspectiveCamera, Environment, Float } from "@react-three/drei"
+import * as THREE from "three"
 
-export default function HeroAnimation() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { theme } = useTheme()
+// Create a reusable function to generate gradient textures
+function createGradientTexture() {
+  const size = 1024
+  const canvas = document.createElement("canvas")
+  canvas.width = size
+  canvas.height = 1
+
+  const context = canvas.getContext("2d")
+  const gradient = context.createLinearGradient(0, 0, size, 0)
+
+  // Add color stops to match the rainbow colors in the logo
+  gradient.addColorStop(0, "#ff3d81") // pink
+  gradient.addColorStop(0.2, "#ffcc00") // yellow
+  gradient.addColorStop(0.4, "#00e5a0") // green
+  gradient.addColorStop(0.6, "#3db4ff") // blue
+  gradient.addColorStop(0.8, "#9c3dff") // purple
+  gradient.addColorStop(1, "#ff3d81") // back to pink for seamless wrapping
+
+  context.fillStyle = gradient
+  context.fillRect(0, 0, size, 1)
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  texture.repeat.set(1, 1)
+
+  return texture
+}
+
+function Printer(props) {
+  const group = useRef()
+  const [gradientTexture, setGradientTexture] = useState(null)
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    // Create the gradient texture on the client side
+    setGradientTexture(createGradientTexture())
+  }, [])
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    // Set canvas dimensions
-    const setCanvasDimensions = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+  // Create a stylized 3D printer using basic geometries
+  useFrame((state) => {
+    if (group.current) {
+      group.current.rotation.y = THREE.MathUtils.lerp(group.current.rotation.y, (state.mouse.x * Math.PI) / 10, 0.05)
+      group.current.rotation.x = THREE.MathUtils.lerp(group.current.rotation.x, (state.mouse.y * Math.PI) / 20, 0.05)
     }
+  })
 
-    setCanvasDimensions()
-    window.addEventListener("resize", setCanvasDimensions)
+  return (
+    <group ref={group} {...props} dispose={null}>
+      {/* Base of printer */}
+      <mesh position={[0, -1.5, 0]} castShadow receiveShadow>
+        <boxGeometry args={[5, 1, 5]} />
+        <meshStandardMaterial color="#1a1a1a" />
+      </mesh>
 
-    // Create particles
-    const particlesArray: Particle[] = []
-    const numberOfParticles = 100
+      {/* Frame */}
+      <mesh position={[0, 1, 0]} castShadow receiveShadow>
+        <boxGeometry args={[4.5, 4, 4.5]} />
+        <meshStandardMaterial color="#262626" metalness={0.8} roughness={0.2} />
+      </mesh>
 
-    class Particle {
-      x: number
-      y: number
-      size: number
-      speedX: number
-      speedY: number
-      color: string
+      {/* Print bed */}
+      <mesh position={[0, -0.8, 0]} castShadow receiveShadow>
+        <boxGeometry args={[3, 0.2, 3]} />
+        <meshStandardMaterial color="#333333" />
+      </mesh>
 
-      constructor() {
-        this.x = Math.random() * canvas.width
-        this.y = Math.random() * canvas.height
-        this.size = Math.random() * 5 + 1
-        this.speedX = Math.random() * 3 - 1.5
-        this.speedY = Math.random() * 3 - 1.5
+      {/* Extruder arm */}
+      <mesh position={[0, 2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[0.5, 0.5, 4]} />
+        <meshStandardMaterial color="#444444" metalness={0.6} roughness={0.3} />
+      </mesh>
 
-        // Vibrant colors inspired by the 3D print in the image
-        const colors = [
-          "#ff3d81", // pink
-          "#00e5a0", // green
-          "#3db4ff", // blue
-          "#ffcc00", // yellow
-          "#9c3dff", // purple
-        ]
-        this.color = colors[Math.floor(Math.random() * colors.length)]
-      }
+      {/* Extruder head */}
+      <mesh position={[0, 1.5, 1.5]} castShadow receiveShadow>
+        <boxGeometry args={[0.8, 1, 0.8]} />
+        <meshStandardMaterial color="#555555" metalness={0.7} roughness={0.2} />
+      </mesh>
 
-      update() {
-        this.x += this.speedX
-        this.y += this.speedY
+      {/* Colorful 3D printed object (similar to the image) */}
+      <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
+        <mesh position={[0, 0, 0]} castShadow>
+          <torusKnotGeometry args={[0.8, 0.3, 200, 32, 3, 4]} />
+          {gradientTexture ? (
+            <meshStandardMaterial map={gradientTexture} metalness={0.3} roughness={0.2} />
+          ) : (
+            <meshStandardMaterial color="#ff3d81" metalness={0.3} roughness={0.2} />
+          )}
+        </mesh>
+      </Float>
 
-        if (this.x > canvas.width || this.x < 0) {
-          this.speedX = -this.speedX
-        }
-        if (this.y > canvas.height || this.y < 0) {
-          this.speedY = -this.speedY
-        }
-      }
+      {/* Control panel */}
+      <mesh position={[-1.8, 0.5, -1.8]} castShadow receiveShadow>
+        <boxGeometry args={[0.8, 0.8, 0.2]} />
+        <meshStandardMaterial color="#111111" />
+      </mesh>
 
-      draw() {
-        ctx.fillStyle = this.color
-        ctx.beginPath()
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
-        ctx.fill()
-      }
-    }
+      {/* Small LED lights */}
+      <pointLight position={[-1.8, 0.5, -1.7]} intensity={0.5} color="#00e5a0" distance={1} />
+      <pointLight position={[0, 1.5, 1.6]} intensity={0.5} color="#ff3d81" distance={1} />
+    </group>
+  )
+}
 
-    const init = () => {
-      for (let i = 0; i < numberOfParticles; i++) {
-        particlesArray.push(new Particle())
-      }
-    }
+// Colorful gradient background
+function GradientBackground() {
+  return (
+    <mesh position={[0, 0, -10]}>
+      <planeGeometry args={[50, 50]} />
+      <meshBasicMaterial color="#0f0f12" />
+    </mesh>
+  )
+}
 
-    const connectParticles = () => {
-      for (let a = 0; a < particlesArray.length; a++) {
-        for (let b = a; b < particlesArray.length; b++) {
-          const dx = particlesArray[a].x - particlesArray[b].x
-          const dy = particlesArray[a].y - particlesArray[b].y
-          const distance = Math.sqrt(dx * dx + dy * dy)
+export default function Hero3DPrinter() {
+  const [isMounted, setIsMounted] = useState(false)
 
-          if (distance < 150) {
-            const opacity = 1 - distance / 150
-            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.2})`
-            ctx.lineWidth = 1
-            ctx.beginPath()
-            ctx.moveTo(particlesArray[a].x, particlesArray[a].y)
-            ctx.lineTo(particlesArray[b].x, particlesArray[b].y)
-            ctx.stroke()
-          }
-        }
-      }
-    }
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+  if (!isMounted) {
+    return <div className="w-full h-screen bg-gray-950" />
+  }
 
-      // Add a subtle gradient background
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
-      gradient.addColorStop(0, "rgba(20, 20, 25, 0.8)")
-      gradient.addColorStop(1, "rgba(30, 30, 35, 0.8)")
-      ctx.fillStyle = gradient
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+  return (
+    <div className="absolute inset-0 w-full h-full">
+      <Canvas shadows dpr={[1, 2]}>
+        <PerspectiveCamera makeDefault position={[0, 0, 10]} fov={40} />
+        <ambientLight intensity={0.4} />
+        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
+        <pointLight position={[-10, -10, -10]} intensity={0.5} />
 
-      for (let i = 0; i < particlesArray.length; i++) {
-        particlesArray[i].update()
-        particlesArray[i].draw()
-      }
-      connectParticles()
-      requestAnimationFrame(animate)
-    }
+        <GradientBackground />
 
-    init()
-    animate()
+        <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
+          <Printer position={[0, -1, 0]} scale={0.8} />
+        </Float>
 
-    return () => {
-      window.removeEventListener("resize", setCanvasDimensions)
-    }
-  }, [theme])
-
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" style={{ opacity: 0.8 }} />
+        <Environment preset="city" />
+        <OrbitControls
+          enableZoom={false}
+          enablePan={false}
+          minPolarAngle={Math.PI / 2.5}
+          maxPolarAngle={Math.PI / 1.8}
+          minAzimuthAngle={-Math.PI / 4}
+          maxAzimuthAngle={Math.PI / 4}
+        />
+      </Canvas>
+    </div>
+  )
 }
