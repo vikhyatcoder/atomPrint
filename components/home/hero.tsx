@@ -1,62 +1,88 @@
-"use client"
+'use client'
 
-import { useRef, useState, useEffect } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ArrowRight, RotateCcw } from "lucide-react"
-import { motion } from "framer-motion"
-import { useMediaQuery } from "@/hooks/use-media-query"
-import dynamic from "next/dynamic"
-import { useDeviceCapabilities } from "@/hooks/use-device-capabilities"
-import ErrorBoundary from "@/components/error-boundary"
+import { useRef, useState, useEffect } from 'react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { ArrowRight, RotateCcw } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { useMediaQuery } from '@/hooks/use-media-query'
+import dynamic from 'next/dynamic'
+import { useDeviceCapabilities } from '@/hooks/use-device-capabilities'
+import ErrorBoundary from '@/components/error-boundary'
+import { AnimatePresence, motion as Motion } from 'framer-motion'
+import Image from 'next/image'
 
-// Dynamically import 3D component with no SSR to avoid hydration issues
-const Model3D = dynamic(() => import("./model-3d"), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center">
-      <div className="animate-pulse text-primary text-xl">Loading 3D model...</div>
+// Dynamically import 3D component
+
+// Auto image carousel fallback
+const AutoImageCarousel = () => {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const isMobile = useMediaQuery('(max-width: 768px)')
+  const images = [
+    '/images/3d-house.jpg',
+    '/images/boat.jpg',
+    '/images/dinosaur.jpg',
+    '/images/robotic-arm.jpg',
+  ]
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % images.length)
+    }, 5000) // Change every 5s
+    return () => clearInterval(interval)
+  }, [])
+
+  const animationProps = isMobile
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.3 },
+      }
+    : {
+        initial: { opacity: 0, scale: 0.95 },
+        animate: { opacity: 1, scale: 1 },
+        exit: { opacity: 0, scale: 0.95 },
+        transition: { duration: 0.5 },
+      }
+
+  return (
+    <div className="relative w-full h-full overflow-hidden rounded-lg">
+      <AnimatePresence mode="wait">
+        <Motion.div key={activeIndex} {...animationProps} className="absolute w-full h-full">
+          <Image
+            src={images[activeIndex]}
+            alt={`Hero Image ${activeIndex + 1}`}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 640px"
+            priority
+          />
+        </Motion.div>
+      </AnimatePresence>
     </div>
-  ),
-})
-
-// Static fallback for low-end devices or errors
-const StaticHero = () => (
-  <div className="w-full h-full flex items-center justify-center">
-    <div className="text-center">
-      <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
-        <span className="text-5xl">🖨️</span>
-      </div>
-      <p className="text-xl font-medium text-primary">3D Printing Excellence</p>
-    </div>
-  </div>
-)
+  )
+}
 
 export default function Hero() {
   const containerRef = useRef(null)
-  const isMobile = useMediaQuery("(max-width: 768px)")
+  const isMobile = useMediaQuery('(max-width: 768px)')
   const [mounted, setMounted] = useState(false)
   const { isLowEndDevice, effectiveType } = useDeviceCapabilities()
   const [modelError, setModelError] = useState(false)
 
-  // Use static hero for very low-end devices or slow connections
-  const useStaticHero = isLowEndDevice || effectiveType === "slow-2g" || effectiveType === "2g" || modelError
+  const useStaticHero = isLowEndDevice || effectiveType === 'slow-2g' || effectiveType === '2g' || modelError
 
-  // Only render 3D content after component is mounted
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Optimized motion variants for better performance
   const textVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: {
-        duration: 0.5,
-        ease: isMobile ? "easeOut" : "easeInOut",
-      },
+      transition: { duration: 0.5, ease: isMobile ? 'easeOut' : 'easeInOut' },
     },
   }
 
@@ -89,10 +115,10 @@ export default function Hero() {
         <div className="relative h-[300px] md:h-[400px] lg:h-[500px]" ref={containerRef}>
           {mounted ? (
             useStaticHero ? (
-              <StaticHero />
+              <AutoImageCarousel />
             ) : (
               <div className="relative w-full h-full">
-                <ErrorBoundary fallback={<StaticHero />} onError={() => setModelError(true)}>
+                <ErrorBoundary fallback={<AutoImageCarousel />} onError={() => setModelError(true)}>
                   <Model3D isMobile={isMobile} />
                 </ErrorBoundary>
 
