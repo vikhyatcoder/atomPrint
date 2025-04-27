@@ -1,8 +1,5 @@
 import type { Metadata } from "next"
 import ServiceCards from "@/components/services/service-cards"
-import PricingEstimates from "@/components/services/pricing-estimates"
-import StartProjectCTA from "@/components/services/start-project-cta"
-
 export const metadata: Metadata = {
   title: "Services | Atom Print",
   description:
@@ -19,8 +16,6 @@ export default function ServicesPage() {
       </p>
 
       <ServiceCards />
-      <PricingEstimates />
-      <StartProjectCTA />
     </div>
   )
 }

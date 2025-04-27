@@ -20,7 +20,7 @@ const portfolioItems = [
       "A detailed architectural model of a modern minimalist house with multiple levels and open spaces. Perfect for client presentations and design visualization.",
     client: "Architectural Design Studio",
     material: "White PLA",
-    printTime: "48 hours",
+    printTime: "24 hours",
   },
   {
     id: 2,
@@ -32,7 +32,7 @@ const portfolioItems = [
       "A fully functional 3D printed robotic arm with servo motors and electronic components. Features a gripper mechanism and multiple points of articulation.",
     client: "Engineering Research Lab",
     material: "Red & White PLA, Electronic Components",
-    printTime: "36 hours",
+    printTime: "16 hours",
   },
   {
     id: 3,
@@ -44,7 +44,7 @@ const portfolioItems = [
       "A detailed small scale model of the printed devotee lord Ghanesha printed with high quality filament and durable in strength",
     client: "Sandeep Mishra",
     material: "PLA, Blue",
-    printTime: "8 hours",
+    printTime: "40 Minutes",
   },
   {
     id: 4,
@@ -68,7 +68,7 @@ const portfolioItems = [
       "Detailed model of a boat suitable for decoration and gifting purposes and also available for architectural purposes.",
     client: "Suman Bhati ",
     material: "White PLA",
-    printTime: "6 hours",
+    printTime: "30 Minutes",
   },
   {
     id: 6,
@@ -80,7 +80,7 @@ const portfolioItems = [
       "A cheerful model of a dino, expressing about the emotion of Joy optimal for giftings and décor purposes",
     client: "Mandeep Singh",
     material: "Blue and White PLA",
-    printTime: "5 hours",
+    printTime: "1.5 hours",
   },
   {
     id: 7,
@@ -92,7 +92,7 @@ const portfolioItems = [
       "Model of a spider describing about the texture and the physical features of it best for educational purposes and demonstration",
     client: "Jatin Bansal",
     material: "White PLA",
-    printTime: "3 hours",
+    printTime: "25 Minutes",
   },
 ]
 
