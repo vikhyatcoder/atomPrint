@@ -1,41 +1,79 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, RotateCcw } from "lucide-react"
 import { motion } from "framer-motion"
-import { Canvas } from "@react-three/fiber"
-import { OrbitControls, PerspectiveCamera, Environment } from "@react-three/drei"
+import { useMediaQuery } from "@/hooks/use-media-query"
+import dynamic from "next/dynamic"
+import { useDeviceCapabilities } from "@/hooks/use-device-capabilities"
+import ErrorBoundary from "@/components/error-boundary"
 
-function Model(props) {
-  // This is a placeholder for a 3D model
-  // In a real implementation, you would use useGLTF to load a 3D model
-  return (
-    <mesh {...props} castShadow receiveShadow>
-      <torusKnotGeometry args={[1, 0.3, 128, 32]} />
-      <meshStandardMaterial color="#ff3d81" metalness={0.5} roughness={0.2} />
-    </mesh>
-  )
-}
+// Dynamically import 3D component with no SSR to avoid hydration issues
+const Model3D = dynamic(() => import("./model-3d"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="animate-pulse text-primary text-xl">Loading 3D model...</div>
+    </div>
+  ),
+})
+
+// Static fallback for low-end devices or errors
+const StaticHero = () => (
+  <div className="w-full h-full flex items-center justify-center">
+    <div className="text-center">
+      <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
+        <span className="text-5xl">🖨️</span>
+      </div>
+      <p className="text-xl font-medium text-primary">3D Printing Excellence</p>
+    </div>
+  </div>
+)
 
 export default function Hero() {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef(null)
+  const isMobile = useMediaQuery("(max-width: 768px)")
+  const [mounted, setMounted] = useState(false)
+  const { isLowEndDevice, effectiveType } = useDeviceCapabilities()
+  const [modelError, setModelError] = useState(false)
+
+  // Use static hero for very low-end devices or slow connections
+  const useStaticHero = isLowEndDevice || effectiveType === "slow-2g" || effectiveType === "2g" || modelError
+
+  // Only render 3D content after component is mounted
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Optimized motion variants for better performance
+  const textVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: isMobile ? "easeOut" : "easeInOut",
+      },
+    },
+  }
 
   return (
     <section className="relative min-h-screen pt-20 flex items-center hero-pattern overflow-hidden">
       <div className="container mx-auto px-4 py-16 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
         <div className="z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6">
+          <motion.div initial="hidden" animate="visible" variants={textVariants} className="text-center lg:text-left">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6">
               <span className="block">Design It.</span>
               <span className="block">Customize It.</span>
               <span className="gradient-text">Print It.</span>
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-muted-foreground">
+            <p className="text-lg md:text-xl mb-8 text-muted-foreground max-w-md mx-auto lg:mx-0">
               Turn your creative ideas into tangible reality with our student-run 3D printing service.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button asChild size="lg">
                 <Link href="/portfolio">
                   View Portfolio <ArrowRight className="ml-2 h-5 w-5" />
@@ -48,30 +86,28 @@ export default function Hero() {
           </motion.div>
         </div>
 
-        <div className="relative h-[400px] lg:h-[600px]" ref={containerRef}>
-          <div className="absolute inset-0">
-            <Canvas shadows dpr={[1, 2]}>
-              <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={40} />
-              <ambientLight intensity={0.4} />
-              <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
+        <div className="relative h-[300px] md:h-[400px] lg:h-[500px]" ref={containerRef}>
+          {mounted ? (
+            useStaticHero ? (
+              <StaticHero />
+            ) : (
+              <div className="relative w-full h-full">
+                <ErrorBoundary fallback={<StaticHero />} onError={() => setModelError(true)}>
+                  <Model3D isMobile={isMobile} />
+                </ErrorBoundary>
 
-              <motion.group
-                animate={{
-                  rotateY: [0, Math.PI * 2],
-                }}
-                transition={{
-                  duration: 20,
-                  ease: "linear",
-                  repeat: Number.POSITIVE_INFINITY,
-                }}
-              >
-                <Model />
-              </motion.group>
-
-              <Environment preset="city" />
-              <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={1} />
-            </Canvas>
-          </div>
+                {/* Interactive hint */}
+                <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-full p-2 shadow-md flex items-center gap-2 text-xs text-muted-foreground">
+                  <RotateCcw className="h-4 w-4" />
+                  <span>Drag to rotate</span>
+                </div>
+              </div>
+            )
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="animate-pulse text-primary text-xl">Loading...</div>
+            </div>
+          )}
         </div>
       </div>
 
