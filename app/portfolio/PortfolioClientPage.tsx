@@ -10,7 +10,7 @@ export default function PortfolioClientPage() {
   return (
     <>
       <PortfolioFilters onFilterChange={setActiveFilter} onSearchChange={setSearchQuery} />
-      <PortfolioGrid />
+      <PortfolioGrid activeFilter={activeFilter} searchQuery={searchQuery} />
     </>
   )
 }

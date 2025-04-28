@@ -1,13 +1,11 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Instagram, Mail, Phone, MapPin } from "lucide-react"
 
 export default function Footer() {
   return (
     <footer className="bg-background border-t">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <Link href="/" className="flex items-center mb-4">
               <span className="text-2xl font-bold">
@@ -43,13 +41,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/orders" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Track Order
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Blog
+                <Link href="/testimonials" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Testimonials
                 </Link>
               </li>
               <li>
@@ -79,8 +72,11 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t mt-12 pt-8 text-center text-muted-foreground">
+        <div className="border-t mt-12 pt-8 flex flex-col md:flex-row justify-between items-center text-muted-foreground">
           <p>© {new Date().getFullYear()} Atom Print. All rights reserved.</p>
+          <p className="mt-2 md:mt-0">
+            Powered by <span className="font-medium">Vikhyat Agrawal</span>
+          </p>
         </div>
       </div>
     </footer>

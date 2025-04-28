@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState, useMemo } from "react"
+import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import OptimizedImage from "@/components/optimized-image"
 
 // In a real application, this would come from a CMS or API
 const portfolioItems = [
@@ -96,20 +96,25 @@ const portfolioItems = [
   },
 ]
 
-export default function PortfolioGrid() {
+interface PortfolioGridProps {
+  activeFilter?: string
+  searchQuery?: string
+}
+
+export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }: PortfolioGridProps) {
   const [selectedItem, setSelectedItem] = useState(null)
-  const [activeFilter, setActiveFilter] = useState("all")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filteredItems, setFilteredItems] = useState(portfolioItems)
   const [activeTab, setActiveTab] = useState("details")
 
-  // Filter items based on active filter and search query
-  useEffect(() => {
+  // Memoize filtered items to prevent unnecessary recalculations
+  const filteredItems = useMemo(() => {
     let filtered = portfolioItems
 
     // Apply tag/category filter
     if (activeFilter !== "all") {
-      filtered = filtered.filter((item) => item.tags.includes(activeFilter))
+      filtered = filtered.filter(
+        (item) =>
+          item.category.toLowerCase() === activeFilter.toLowerCase() || item.tags.includes(activeFilter.toLowerCase()),
+      )
     }
 
     // Apply search filter
@@ -124,59 +129,50 @@ export default function PortfolioGrid() {
       )
     }
 
-    setFilteredItems(filtered)
+    return filtered
   }, [activeFilter, searchQuery])
 
   return (
     <>
-      <AnimatePresence>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.length > 0 ? (
-            filteredItems.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="group cursor-pointer"
-                onClick={() => setSelectedItem(item)}
-                layout
-              >
-                <div className="relative h-64 overflow-hidden rounded-lg">
-                  <Image
-                    src={item.image || "/placeholder.svg"}
-                    alt={item.title}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    priority={index < 6}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80"></div>
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <Badge className="mb-2">{item.category}</Badge>
-                    <h3 className="text-xl font-bold text-white">{item.title}</h3>
-                  </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredItems.length > 0 ? (
+          filteredItems.map((item, index) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
+              className="group cursor-pointer"
+              onClick={() => setSelectedItem(item)}
+              layout="position"
+            >
+              <div className="relative h-64 overflow-hidden rounded-lg">
+                <OptimizedImage
+                  src={item.image || "/placeholder.svg"}
+                  alt={item.title}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  priority={index < 3}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80"></div>
+                <div className="absolute bottom-4 left-4 right-4">
+                  <Badge className="mb-2">{item.category}</Badge>
+                  <h3 className="text-xl font-bold text-white">{item.title}</h3>
                 </div>
-              </motion.div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <h3 className="text-xl font-medium mb-2">No projects found</h3>
-              <p className="text-muted-foreground">Try adjusting your filters or search query</p>
-              <Button
-                className="mt-4"
-                onClick={() => {
-                  setActiveFilter("all")
-                  setSearchQuery("")
-                }}
-              >
-                Reset Filters
-              </Button>
-            </div>
-          )}
-        </div>
-      </AnimatePresence>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-12">
+            <h3 className="text-xl font-medium mb-2">No projects found</h3>
+            <p className="text-muted-foreground">Try adjusting your filters or search query</p>
+            <Button className="mt-4" onClick={() => window.location.reload()}>
+              Reset Filters
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Project Detail Modal */}
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
@@ -199,11 +195,12 @@ export default function PortfolioGrid() {
                 <TabsContent value="details" className="mt-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="relative h-64 md:h-80 rounded-lg overflow-hidden">
-                      <Image
+                      <OptimizedImage
                         src={selectedItem.image || "/placeholder.svg"}
                         alt={selectedItem.title}
                         fill
                         className="object-cover"
+                        priority
                       />
                     </div>
 
@@ -257,11 +254,12 @@ export default function PortfolioGrid() {
                     </div>
 
                     <div className="relative h-64 md:h-80 rounded-lg overflow-hidden">
-                      <Image
+                      <OptimizedImage
                         src={selectedItem.image || "/placeholder.svg"}
                         alt={selectedItem.title}
                         fill
                         className="object-cover"
+                        priority
                       />
                     </div>
                   </div>

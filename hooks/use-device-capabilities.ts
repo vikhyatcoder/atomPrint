@@ -6,28 +6,32 @@ interface DeviceCapabilities {
   isLowEndDevice: boolean
   hasWebGL: boolean
   hasTouchScreen: boolean
-  browserName: string
-  devicePixelRatio: number
   effectiveType: string
   saveData: boolean
-  cpuCores: number
-  memory: number
 }
 
+// Create a singleton to avoid recalculating capabilities
+let cachedCapabilities: DeviceCapabilities | null = null
+
 export function useDeviceCapabilities(): DeviceCapabilities {
-  const [capabilities, setCapabilities] = useState<DeviceCapabilities>({
-    isLowEndDevice: false,
-    hasWebGL: true,
-    hasTouchScreen: false,
-    browserName: "unknown",
-    devicePixelRatio: 1,
-    effectiveType: "4g",
-    saveData: false,
-    cpuCores: 4,
-    memory: 4,
-  })
+  const [capabilities, setCapabilities] = useState<DeviceCapabilities>(
+    () =>
+      cachedCapabilities || {
+        isLowEndDevice: false,
+        hasWebGL: true,
+        hasTouchScreen: false,
+        effectiveType: "4g",
+        saveData: false,
+      },
+  )
 
   useEffect(() => {
+    // Skip if already calculated
+    if (cachedCapabilities) {
+      setCapabilities(cachedCapabilities)
+      return
+    }
+
     // Only run on client
     if (typeof window === "undefined") return
 
@@ -37,12 +41,6 @@ export function useDeviceCapabilities(): DeviceCapabilities {
       const canvas = document.createElement("canvas")
       const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl")
       hasWebGL = !!gl
-
-      // Clean up
-      if (gl) {
-        const ext = gl.getExtension("WEBGL_lose_context")
-        if (ext) ext.loseContext()
-      }
     } catch (e) {
       hasWebGL = false
     }
@@ -53,51 +51,6 @@ export function useDeviceCapabilities(): DeviceCapabilities {
       navigator.maxTouchPoints > 0 ||
       // @ts-ignore
       navigator.msMaxTouchPoints > 0
-
-    // Detect browser
-    const userAgent = navigator.userAgent
-    let browserName = "unknown"
-    if (userAgent.match(/chrome|chromium|crios/i)) {
-      browserName = "chrome"
-    } else if (userAgent.match(/firefox|fxios/i)) {
-      browserName = "firefox"
-    } else if (userAgent.match(/safari/i)) {
-      browserName = "safari"
-    } else if (userAgent.match(/opr\//i)) {
-      browserName = "opera"
-    } else if (userAgent.match(/edg/i)) {
-      browserName = "edge"
-    }
-
-    // Get CPU cores
-    // @ts-ignore
-    const cpuCores = navigator.hardwareConcurrency || 2
-
-    // Get memory (in GB)
-    // @ts-ignore
-    const memory = navigator.deviceMemory || 4
-
-    // Performance test - measure time to execute a simple task
-    const startTime = performance.now()
-    let result = 0
-    for (let i = 0; i < 1000000; i++) {
-      result += i
-    }
-    const endTime = performance.now()
-    const executionTime = endTime - startTime
-
-    // Check for low-end device
-    const isLowEndDevice =
-      // Low memory (less than 4GB)
-      memory < 4 ||
-      // Low CPU cores (less than 4)
-      cpuCores < 4 ||
-      // Low DPR
-      window.devicePixelRatio < 2 ||
-      // Slow execution time
-      executionTime > 100 ||
-      // Mobile device
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
     // Network information
     let effectiveType = "4g"
@@ -111,17 +64,28 @@ export function useDeviceCapabilities(): DeviceCapabilities {
       saveData = !!navigator.connection.saveData
     }
 
-    setCapabilities({
+    // Simple heuristic for low-end device detection
+    const isLowEndDevice =
+      // Mobile device
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      // Low DPR
+      window.devicePixelRatio < 2 ||
+      // Slow connection
+      effectiveType === "slow-2g" ||
+      effectiveType === "2g" ||
+      effectiveType === "3g"
+
+    const newCapabilities = {
       isLowEndDevice,
       hasWebGL,
       hasTouchScreen,
-      browserName,
-      devicePixelRatio: window.devicePixelRatio,
       effectiveType,
       saveData,
-      cpuCores,
-      memory,
-    })
+    }
+
+    // Cache the capabilities
+    cachedCapabilities = newCapabilities
+    setCapabilities(newCapabilities)
   }, [])
 
   return capabilities

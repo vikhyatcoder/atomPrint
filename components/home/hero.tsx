@@ -1,77 +1,58 @@
-'use client'
+"use client"
 
-import { useRef, useState, useEffect } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { ArrowRight, RotateCcw } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useMediaQuery } from '@/hooks/use-media-query'
-import dynamic from 'next/dynamic'
-import { useDeviceCapabilities } from '@/hooks/use-device-capabilities'
-import ErrorBoundary from '@/components/error-boundary'
-import { AnimatePresence, motion as Motion } from 'framer-motion'
-import Image from 'next/image'
+import { useRef, useState, useEffect } from "react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { ArrowRight } from "lucide-react"
+import { motion } from "framer-motion"
+import { useMediaQuery } from "@/hooks/use-media-query"
+import { useDeviceCapabilities } from "@/hooks/use-device-capabilities"
+import Image from "next/image"
 
-// Dynamically import 3D component
-
-// Auto image carousel fallback
+// Auto image carousel for static fallback
 const AutoImageCarousel = () => {
   const [activeIndex, setActiveIndex] = useState(0)
-  const isMobile = useMediaQuery('(max-width: 768px)')
-  const images = [
-    '/images/3d-house.jpg',
-    '/images/boat.jpg',
-    '/images/dinosaur.jpg',
-    '/images/robotic-arm.jpg',
-  ]
+  const images = ["/images/3d-house.jpg", "/images/boat.jpg", "/images/dinosaur.jpg", "/images/robotic-arm.jpg"]
 
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % images.length)
-    }, 3000) // Change every 5s
+    }, 3000)
     return () => clearInterval(interval)
   }, [])
 
-  const animationProps = isMobile
-    ? {
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        exit: { opacity: 0 },
-        transition: { duration: 0.3 },
-      }
-    : {
-        initial: { opacity: 0, scale: 0.95 },
-        animate: { opacity: 1, scale: 1 },
-        exit: { opacity: 0, scale: 0.95 },
-        transition: { duration: 0.5 },
-      }
-
   return (
     <div className="relative w-full h-full overflow-hidden rounded-lg">
-      <AnimatePresence mode="wait">
-        <Motion.div key={activeIndex} {...animationProps} className="absolute w-full h-full">
+      {images.map((src, index) => (
+        <div
+          key={src}
+          className={`absolute w-full h-full transition-opacity duration-500 ${
+            activeIndex === index ? "opacity-100" : "opacity-0"
+          }`}
+        >
           <Image
-            src={images[activeIndex]}
-            alt={`Hero Image ${activeIndex + 1}`}
+            src={src || "/placeholder.svg"}
+            alt={`Hero Image ${index + 1}`}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 640px"
-            priority
+            priority={index === 0}
+            loading={index === 0 ? "eager" : "lazy"}
           />
-        </Motion.div>
-      </AnimatePresence>
+        </div>
+      ))}
     </div>
   )
 }
 
 export default function Hero() {
   const containerRef = useRef(null)
-  const isMobile = useMediaQuery('(max-width: 768px)')
+  const isMobile = useMediaQuery("(max-width: 768px)")
   const [mounted, setMounted] = useState(false)
   const { isLowEndDevice, effectiveType } = useDeviceCapabilities()
-  const [modelError, setModelError] = useState(false)
 
-  const useStaticHero = isLowEndDevice || effectiveType === 'slow-2g' || effectiveType === '2g' || modelError
+  // Always use static hero for better performance
+  const useStaticHero = true
 
   useEffect(() => {
     setMounted(true)
@@ -82,7 +63,7 @@ export default function Hero() {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5, ease: isMobile ? 'easeOut' : 'easeInOut' },
+      transition: { duration: 0.5, ease: isMobile ? "easeOut" : "easeInOut" },
     },
   }
 
@@ -114,21 +95,7 @@ export default function Hero() {
 
         <div className="relative h-[300px] md:h-[400px] lg:h-[500px]" ref={containerRef}>
           {mounted ? (
-            useStaticHero ? (
-              <AutoImageCarousel />
-            ) : (
-              <div className="relative w-full h-full">
-                <ErrorBoundary fallback={<AutoImageCarousel />} onError={() => setModelError(true)}>
-                  <Model3D isMobile={isMobile} />
-                </ErrorBoundary>
-
-                {/* Interactive hint */}
-                <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm rounded-full p-2 shadow-md flex items-center gap-2 text-xs text-muted-foreground">
-                  <RotateCcw className="h-4 w-4" />
-                  <span>Drag to rotate</span>
-                </div>
-              </div>
-            )
+            <AutoImageCarousel />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <div className="animate-pulse text-primary text-xl">Loading...</div>

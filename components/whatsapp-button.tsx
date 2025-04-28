@@ -32,7 +32,11 @@ export default function WhatsAppButton() {
         </div>
       )}
 
-      <Button className="h-14 w-14 rounded-full shadow-lg" onClick={() => setIsOpen(!isOpen)}>
+      <Button
+        className="h-14 w-14 rounded-full shadow-lg"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Open WhatsApp chat"
+      >
         <MessageCircle className="h-6 w-6" />
       </Button>
     </div>

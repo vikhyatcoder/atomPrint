@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, memo } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Menu, X } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
 import { useMediaQuery } from "@/hooks/use-media-query"
 
 const navigation = [
@@ -17,6 +16,20 @@ const navigation = [
   { name: "Contact", href: "/contact" },
 ]
 
+// Memoized navigation link for better performance
+const NavLink = memo(({ item, pathname }) => (
+  <Link
+    href={item.href}
+    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+      pathname === item.href ? "text-primary" : "text-foreground/70 hover:text-foreground"
+    }`}
+  >
+    {item.name}
+  </Link>
+))
+
+NavLink.displayName = "NavLink"
+
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -25,34 +38,18 @@ export default function Navbar() {
 
   // Debounced scroll handler for better performance
   const handleScroll = useCallback(() => {
-    if (window.scrollY > 10 && !isScrolled) {
+    if (window.scrollY > 10) {
       setIsScrolled(true)
-    } else if (window.scrollY <= 10 && isScrolled) {
+    } else {
       setIsScrolled(false)
     }
-  }, [isScrolled])
+  }, [])
 
-  // Handle scroll effect with debounce and requestAnimationFrame
+  // Handle scroll effect with passive listener for better performance
   useEffect(() => {
-    let scrollTimer: number | null = null
-    let isScrolling = false
-
-    const debouncedScroll = () => {
-      if (!isScrolling) {
-        isScrolling = true
-        scrollTimer = window.requestAnimationFrame(() => {
-          handleScroll()
-          isScrolling = false
-        })
-      }
-    }
-
-    window.addEventListener("scroll", debouncedScroll, { passive: true })
+    window.addEventListener("scroll", handleScroll, { passive: true })
     return () => {
-      window.removeEventListener("scroll", debouncedScroll)
-      if (scrollTimer !== null) {
-        window.cancelAnimationFrame(scrollTimer)
-      }
+      window.removeEventListener("scroll", handleScroll)
     }
   }, [handleScroll])
 
@@ -73,19 +70,6 @@ export default function Navbar() {
     }
   }, [mobileMenuOpen])
 
-  // Simplified animation variants for better performance
-  const menuItemVariants = {
-    hidden: { opacity: 0, x: isMobile ? -10 : -20 },
-    visible: (i) => ({
-      opacity: 1,
-      x: 0,
-      transition: {
-        delay: isMobile ? 0.05 * i : 0.05 * i,
-        duration: 0.2,
-      },
-    }),
-  }
-
   return (
     <header
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
@@ -105,15 +89,7 @@ export default function Navbar() {
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-1">
           {navigation.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                pathname === item.href ? "text-primary" : "text-foreground/70 hover:text-foreground"
-              }`}
-            >
-              {item.name}
-            </Link>
+            <NavLink key={item.name} item={item} pathname={pathname} />
           ))}
         </div>
 
@@ -133,70 +109,39 @@ export default function Navbar() {
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
           >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={mobileMenuOpen ? "close" : "menu"}
-                initial={{ opacity: 0, rotate: mobileMenuOpen ? -45 : 45 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                exit={{ opacity: 0, rotate: mobileMenuOpen ? 45 : -45 }}
-                transition={{ duration: 0.2 }}
-              >
-                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </motion.div>
-            </AnimatePresence>
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </nav>
 
-      {/* Mobile Menu with animation */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            className="md:hidden bg-background/95 backdrop-blur-md fixed inset-0 top-[72px] z-40 mobile-nav-container"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "calc(100vh - 72px)" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-          >
-            <div className="container mx-auto px-4 py-4 flex flex-col h-full">
-              <div className="space-y-1 py-4">
-                {navigation.map((item, index) => (
-                  <motion.div
-                    key={item.name}
-                    custom={index}
-                    variants={menuItemVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    <Link
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`block px-4 py-3 rounded-md text-base font-medium ${
-                        pathname === item.href
-                          ? "text-primary bg-primary/10"
-                          : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
-                      }`}
-                    >
-                      {item.name}
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-              <div className="mt-auto pb-8">
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: navigation.length * 0.05 }}
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-background/95 backdrop-blur-md fixed inset-0 top-[72px] z-40 mobile-nav-container">
+          <div className="container mx-auto px-4 py-4 flex flex-col h-full">
+            <div className="space-y-1 py-4">
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-3 rounded-md text-base font-medium ${
+                    pathname === item.href
+                      ? "text-primary bg-primary/10"
+                      : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                  }`}
                 >
-                  <Button asChild className="w-full">
-                    <Link href="/services">Start Printing</Link>
-                  </Button>
-                </motion.div>
-              </div>
+                  {item.name}
+                </Link>
+              ))}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="mt-auto pb-8">
+              <Button asChild className="w-full">
+                <Link href="/services">Start Printing</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   )
 }

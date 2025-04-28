@@ -10,7 +10,7 @@ import WhatsAppButtonWrapper from "@/components/whatsapp-button-wrapper"
 // Configure the font with display swap for better performance
 const montserrat = Montserrat({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-montserrat",
   preload: true,
@@ -44,10 +44,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
         {/* Add preload hints for critical resources */}
-        <link rel="preload" as="image" href="/placeholder.svg?height=200&width=200" />
-
-        {/* Add resource hints */}
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="preload" as="image" href="/images/3d-house.jpg" />
       </head>
       <body className="font-sans">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>

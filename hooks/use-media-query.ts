@@ -2,9 +2,19 @@
 
 import { useState, useEffect, useRef } from "react"
 
+// Cache media query results to avoid redundant calculations
+const mediaQueryCache = new Map<string, boolean>()
+
 export function useMediaQuery(query: string): boolean {
   // Default to false to avoid hydration mismatch
-  const [matches, setMatches] = useState(false)
+  const [matches, setMatches] = useState(() => {
+    // Use cached value if available
+    if (mediaQueryCache.has(query)) {
+      return mediaQueryCache.get(query)
+    }
+    return false
+  })
+
   const [mounted, setMounted] = useState(false)
 
   // Use ref to store the media query to avoid recreating it on each render
@@ -24,11 +34,15 @@ export function useMediaQuery(query: string): boolean {
     const media = mediaQueryRef.current
 
     // Set initial value
-    setMatches(media.matches)
+    const initialValue = media.matches
+    setMatches(initialValue)
+    mediaQueryCache.set(query, initialValue)
 
     // Define listener with useRef to avoid recreating on each render
     const listener = (e: MediaQueryListEvent) => {
-      setMatches(e.matches)
+      const newValue = e.matches
+      setMatches(newValue)
+      mediaQueryCache.set(query, newValue)
     }
 
     // Add listener safely (with browser compatibility)
