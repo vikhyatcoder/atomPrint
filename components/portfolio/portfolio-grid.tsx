@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, Suspense } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import OptimizedImage from "@/components/optimized-image"
 
 const portfolioItems = [
-{
+  {
     id: 1,
     title: "Modern Architectural House Model",
     category: "Architecture",
@@ -93,7 +93,8 @@ const portfolioItems = [
     client: "Jatin Bansal",
     material: "White PLA",
     printTime: "25 Minutes",
-  },]
+  },
+]
 
 interface PortfolioGridProps {
   activeFilter?: string
@@ -103,24 +104,19 @@ interface PortfolioGridProps {
 export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }: PortfolioGridProps) {
   const [activeTab, setActiveTab] = useState("details")
   const router = useRouter()
+  const searchParams = useSearchParams()
 
-  // Wrap the useSearchParams() logic in Suspense
-  const SuspendedSearchParams = () => {
-    const searchParams = useSearchParams()
-    const selectedId = searchParams.get("project")
-    const selectedItem = portfolioItems.find(item => String(item.id) === String(selectedId))
-    
-    return { selectedItem }
-  }
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  // Use Suspense to ensure proper handling of async operations
-  const SuspendedComponent = (
-    <Suspense fallback={<div>Loading...</div>}>
-      <SuspendedSearchParams />
-    </Suspense>
-  )
+  // 🔧 Listen for search param changes
+  useEffect(() => {
+    const id = searchParams.get("project")
+    setSelectedId(id)
+  }, [searchParams])
 
-  const { selectedItem } = SuspendedComponent
+  const selectedItem = useMemo(() => {
+    return portfolioItems.find(item => String(item.id) === String(selectedId))
+  }, [selectedId])
 
   const filteredItems = useMemo(() => {
     let filtered = portfolioItems
@@ -147,9 +143,8 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
     return filtered
   }, [activeFilter, searchQuery])
 
-  // Handle dialog close
   const handleDialogClose = () => {
-    router.replace("/portfolio") // This updates the URL without triggering the dialog
+    router.replace("/portfolio")
   }
 
   return (
@@ -194,9 +189,7 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
         )}
       </div>
 
-      <Dialog open={!!selectedItem} onOpenChange={(open) => {
-        if (!open) handleDialogClose() // Handle dialog close with history change
-      }}>
+      <Dialog open={!!selectedItem} onOpenChange={(open) => !open && handleDialogClose()}>
         <DialogContent className="max-w-4xl">
           {selectedItem && (
             <>
