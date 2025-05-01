@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -93,8 +93,7 @@ const portfolioItems = [
     client: "Jatin Bansal",
     material: "White PLA",
     printTime: "25 Minutes",
-  },
-]
+  },]
 
 interface PortfolioGridProps {
   activeFilter?: string
@@ -104,10 +103,24 @@ interface PortfolioGridProps {
 export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }: PortfolioGridProps) {
   const [activeTab, setActiveTab] = useState("details")
   const router = useRouter()
-  const searchParams = useSearchParams()
 
-  const selectedId = searchParams.get("project")
-  const selectedItem = portfolioItems.find(item => String(item.id) === String(selectedId))
+  // Wrap the useSearchParams() logic in Suspense
+  const SuspendedSearchParams = () => {
+    const searchParams = useSearchParams()
+    const selectedId = searchParams.get("project")
+    const selectedItem = portfolioItems.find(item => String(item.id) === String(selectedId))
+    
+    return { selectedItem }
+  }
+
+  // Use Suspense to ensure proper handling of async operations
+  const SuspendedComponent = (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SuspendedSearchParams />
+    </Suspense>
+  )
+
+  const { selectedItem } = SuspendedComponent
 
   const filteredItems = useMemo(() => {
     let filtered = portfolioItems
