@@ -1,12 +1,23 @@
-"use client"
+'use client'
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
 import OptimizedImage from "@/components/optimized-image"
 
 const portfolioItems = [
@@ -96,52 +107,13 @@ const portfolioItems = [
   },
 ]
 
-interface PortfolioGridProps {
-  activeFilter?: string
-  searchQuery?: string
-}
-
-export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }: PortfolioGridProps) {
+export default function PortfolioClientPage() {
   const [activeTab, setActiveTab] = useState("details")
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-
-  // 🔧 Listen for search param changes
-  useEffect(() => {
-    const id = searchParams.get("project")
-    setSelectedId(id)
-  }, [searchParams])
-
-  const selectedItem = useMemo(() => {
-    return portfolioItems.find(item => String(item.id) === String(selectedId))
-  }, [selectedId])
-
-  const filteredItems = useMemo(() => {
-    let filtered = portfolioItems
-
-    if (activeFilter !== "all") {
-      filtered = filtered.filter(
-        (item) =>
-          item.category.toLowerCase() === activeFilter.toLowerCase() ||
-          item.tags.includes(activeFilter.toLowerCase()),
-      )
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(
-        (item) =>
-          item.title.toLowerCase().includes(query) ||
-          item.description.toLowerCase().includes(query) ||
-          item.category.toLowerCase().includes(query) ||
-          item.tags.some((tag) => tag.toLowerCase().includes(query)),
-      )
-    }
-
-    return filtered
-  }, [activeFilter, searchQuery])
+  const selectedId = searchParams.get("project")
+  const selectedItem = portfolioItems.find(item => String(item.id) === String(selectedId))
 
   const handleDialogClose = () => {
     router.replace("/portfolio")
@@ -150,46 +122,41 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.length > 0 ? (
-          filteredItems.map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
-              className="group cursor-pointer"
-              onClick={() => router.push(`/portfolio?project=${item.id}`)}
-              layout="position"
-            >
-              <div className="relative h-64 overflow-hidden rounded-lg">
-                <OptimizedImage
-                  src={item.image || "/placeholder.svg"}
-                  alt={item.title}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  priority={index < 3}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80"></div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <Badge className="mb-2">{item.category}</Badge>
-                  <h3 className="text-xl font-bold text-white">{item.title}</h3>
-                </div>
+        {portfolioItems.map((item, index) => (
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
+            className="group cursor-pointer"
+            onClick={() => router.push(`/portfolio?project=${item.id}`)}
+            layout="position"
+          >
+            <div className="relative h-64 overflow-hidden rounded-lg">
+              <OptimizedImage
+                src={item.image || "/placeholder.svg"}
+                alt={item.title}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                priority={index < 3}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80"></div>
+              <div className="absolute bottom-4 left-4 right-4">
+                <Badge className="mb-2">{item.category}</Badge>
+                <h3 className="text-xl font-bold text-white">{item.title}</h3>
               </div>
-            </motion.div>
-          ))
-        ) : (
-          <div className="col-span-full text-center py-12">
-            <h3 className="text-xl font-medium mb-2">No projects found</h3>
-            <p className="text-muted-foreground">Try adjusting your filters or search query</p>
-            <Button className="mt-4" onClick={() => window.location.href = "/portfolio"}>
-              Reset Filters
-            </Button>
-          </div>
-        )}
+            </div>
+          </motion.div>
+        ))}
       </div>
 
-      <Dialog open={!!selectedItem} onOpenChange={(open) => !open && handleDialogClose()}>
+      <Dialog
+        open={!!selectedItem}
+        onOpenChange={(open) => {
+          if (!open) handleDialogClose()
+        }}
+      >
         <DialogContent className="max-w-4xl">
           {selectedItem && (
             <>
