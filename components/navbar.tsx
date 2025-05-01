@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback, memo } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Menu, X } from "lucide-react"
-import { useMediaQuery } from "@/hooks/use-media-query"
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -14,27 +13,13 @@ const navigation = [
   { name: "Services", href: "/services" },
   { name: "Testimonials", href: "/testimonials" },
   { name: "Contact", href: "/contact" },
+  { name: "Terms of Services", href: "/terms" },
 ]
-
-// Memoized navigation link for better performance
-const NavLink = memo(({ item, pathname }) => (
-  <Link
-    href={item.href}
-    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-      pathname === item.href ? "text-primary" : "text-foreground/70 hover:text-foreground"
-    }`}
-  >
-    {item.name}
-  </Link>
-))
-
-NavLink.displayName = "NavLink"
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
-  const isMobile = useMediaQuery("(max-width: 768px)")
 
   // Debounced scroll handler for better performance
   const handleScroll = useCallback(() => {
@@ -81,21 +66,29 @@ export default function Navbar() {
           <Link href="/" className="flex items-center">
             <span className="text-xl sm:text-2xl font-bold">
               <span className="text-primary">Atom</span>
-              <span className="text-secondary">Print</span>
+              <span className="text-green-400">Print</span>
             </span>
           </Link>
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-1">
+        <div className="hidden md:flex items-center space-x-6">
           {navigation.map((item) => (
-            <NavLink key={item.name} item={item} pathname={pathname} />
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`text-sm font-medium transition-colors ${
+                pathname === item.href ? "text-primary" : "text-foreground/70 hover:text-foreground"
+              }`}
+            >
+              {item.name}
+            </Link>
           ))}
         </div>
 
         <div className="hidden md:flex items-center space-x-4">
           <ThemeToggle />
-          <Button asChild>
+          <Button asChild className="bg-primary hover:bg-primary/90 text-white rounded-full px-6">
             <Link href="/services">Start Printing</Link>
           </Button>
         </div>
@@ -135,7 +128,7 @@ export default function Navbar() {
               ))}
             </div>
             <div className="mt-auto pb-8">
-              <Button asChild className="w-full">
+              <Button asChild className="w-full bg-primary hover:bg-primary/90 text-white rounded-full">
                 <Link href="/services">Start Printing</Link>
               </Button>
             </div>
