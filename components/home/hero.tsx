@@ -1,71 +1,111 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useRef, useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, ChevronDown } from "lucide-react"
+import { ArrowRight } from "lucide-react"
+import { motion } from "framer-motion"
+import { useMediaQuery } from "@/hooks/use-media-query"
+import { useDeviceCapabilities } from "@/hooks/use-device-capabilities"
 import Image from "next/image"
 
+// Auto image carousel for static fallback
+const AutoImageCarousel = () => {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const images = ["/images/3d-house.jpg", "/images/boat.jpg", "/images/dinosaur.jpg", "/images/robotic-arm.jpg"]
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % images.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="relative w-full h-full overflow-hidden rounded-lg">
+      {images.map((src, index) => (
+        <div
+          key={src}
+          className={`absolute w-full h-full transition-opacity duration-500 ${
+            activeIndex === index ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <Image
+            src={src || "/placeholder.svg"}
+            alt={`Hero Image ${index + 1}`}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 640px"
+            priority={index === 0}
+            loading={index === 0 ? "eager" : "lazy"}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function Hero() {
+  const containerRef = useRef(null)
+  const isMobile = useMediaQuery("(max-width: 768px)")
   const [mounted, setMounted] = useState(false)
+  const { isLowEndDevice, effectiveType } = useDeviceCapabilities()
+
+  // Always use static hero for better performance
+  const useStaticHero = true
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  const textVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, ease: isMobile ? "easeOut" : "easeInOut" },
+    },
+  }
+
   return (
-    <section className="relative min-h-screen pt-20 flex items-center bg-[#0a0c16] overflow-hidden">
+    <section className="relative min-h-screen pt-20 flex items-center hero-pattern overflow-hidden">
       <div className="container mx-auto px-4 py-16 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
         <div className="z-10">
-          <div className="text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 text-gray-200">
+          <motion.div initial="hidden" animate="visible" variants={textVariants} className="text-center lg:text-left">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6">
               <span className="block">Design It.</span>
               <span className="block">Customize It.</span>
-              <span className="bg-gradient-to-r from-primary to-green-400 bg-clip-text text-transparent">
-                Print It.
-              </span>
+              <span className="gradient-text">Print It.</span>
             </h1>
-            <p className="text-lg md:text-xl mb-8 text-gray-400 max-w-md">
+            <p className="text-lg md:text-xl mb-8 text-muted-foreground max-w-md mx-auto lg:mx-0">
               Turn your creative ideas into tangible reality with our student-run 3D printing service.
             </p>
-            <div className="flex flex-row gap-4">
-              <Button
-                asChild
-                variant="default"
-                size="lg"
-                className="bg-primary hover:bg-primary/90 text-white rounded-full px-6"
-              >
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <Button asChild size="lg">
                 <Link href="/portfolio">
                   View Portfolio <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="border-gray-700 text-gray-300 hover:bg-gray-800 rounded-full px-6"
-              >
+              <Button asChild variant="outline" size="lg">
                 <Link href="/services">Start Printing</Link>
               </Button>
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        <div className="relative h-[300px] md:h-[400px] lg:h-[500px]">
-          {mounted && (
-            <Image
-              src="/images/3d-house.jpg"
-              alt="3D printed architectural model"
-              fill
-              className="object-contain"
-              priority
-            />
+        <div className="relative h-[300px] md:h-[400px] lg:h-[500px]" ref={containerRef}>
+          {mounted ? (
+            <AutoImageCarousel />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="animate-pulse text-primary text-xl">Loading...</div>
+            </div>
           )}
         </div>
       </div>
 
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <ChevronDown className="h-8 w-8 text-gray-400" />
+        <ArrowRight className="h-8 w-8 rotate-90 text-muted-foreground" />
       </div>
     </section>
   )

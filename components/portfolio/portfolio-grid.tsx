@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
@@ -8,9 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import OptimizedImage from "@/components/optimized-image"
 
-// In a real application, this would come from a CMS or API
 const portfolioItems = [
-  {
+{
     id: 1,
     title: "Modern Architectural House Model",
     category: "Architecture",
@@ -102,22 +102,24 @@ interface PortfolioGridProps {
 }
 
 export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }: PortfolioGridProps) {
-  const [selectedItem, setSelectedItem] = useState(null)
   const [activeTab, setActiveTab] = useState("details")
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
-  // Memoize filtered items to prevent unnecessary recalculations
+  const selectedId = searchParams.get("project")
+  const selectedItem = portfolioItems.find(item => String(item.id) === String(selectedId))
+
   const filteredItems = useMemo(() => {
     let filtered = portfolioItems
 
-    // Apply tag/category filter
     if (activeFilter !== "all") {
       filtered = filtered.filter(
         (item) =>
-          item.category.toLowerCase() === activeFilter.toLowerCase() || item.tags.includes(activeFilter.toLowerCase()),
+          item.category.toLowerCase() === activeFilter.toLowerCase() ||
+          item.tags.includes(activeFilter.toLowerCase()),
       )
     }
 
-    // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
@@ -132,6 +134,11 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
     return filtered
   }, [activeFilter, searchQuery])
 
+  // Handle dialog close
+  const handleDialogClose = () => {
+    router.replace("/portfolio") // This updates the URL without triggering the dialog
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -143,7 +150,7 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
               className="group cursor-pointer"
-              onClick={() => setSelectedItem(item)}
+              onClick={() => router.push(`/portfolio?project=${item.id}`)}
               layout="position"
             >
               <div className="relative h-64 overflow-hidden rounded-lg">
@@ -167,15 +174,16 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
           <div className="col-span-full text-center py-12">
             <h3 className="text-xl font-medium mb-2">No projects found</h3>
             <p className="text-muted-foreground">Try adjusting your filters or search query</p>
-            <Button className="mt-4" onClick={() => window.location.reload()}>
+            <Button className="mt-4" onClick={() => window.location.href = "/portfolio"}>
               Reset Filters
             </Button>
           </div>
         )}
       </div>
 
-      {/* Project Detail Modal */}
-      <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
+      <Dialog open={!!selectedItem} onOpenChange={(open) => {
+        if (!open) handleDialogClose() // Handle dialog close with history change
+      }}>
         <DialogContent className="max-w-4xl">
           {selectedItem && (
             <>
@@ -203,22 +211,17 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
                         priority
                       />
                     </div>
-
                     <div>
                       <p className="mb-4">{selectedItem.description}</p>
-
                       <div className="space-y-2 mb-6">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Client:</span>
                           <span className="font-medium">{selectedItem.client}</span>
                         </div>
                       </div>
-
                       <div className="flex flex-wrap gap-2 mt-4">
                         {selectedItem.tags.map((tag) => (
-                          <Badge key={tag} variant="outline">
-                            {tag}
-                          </Badge>
+                          <Badge key={tag} variant="outline">{tag}</Badge>
                         ))}
                       </div>
                     </div>
@@ -252,7 +255,6 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
                         </div>
                       </div>
                     </div>
-
                     <div className="relative h-64 md:h-80 rounded-lg overflow-hidden">
                       <OptimizedImage
                         src={selectedItem.image || "/placeholder.svg"}
