@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 import WhatsAppButtonWrapper from "@/components/whatsapp-button-wrapper"
+import CookieConsent from "@/components/cookie-consent"
 
 // Configure the font with display swap for better performance
 const montserrat = Montserrat({
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
   viewport: "width=device-width, initial-scale=1, maximum-scale=5",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f0f12" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0c16" },
   ],
     generator: 'v0.dev'
 }
@@ -47,12 +48,13 @@ export default function RootLayout({
         <link rel="preload" as="image" href="/images/3d-house.jpg" />
       </head>
       <body className="font-sans">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <div className="flex min-h-screen flex-col">
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
             <WhatsAppButtonWrapper />
+            <CookieConsent />
           </div>
         </ThemeProvider>
       </body>

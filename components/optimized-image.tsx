@@ -87,7 +87,7 @@ export default function OptimizedImage({
           blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFdwI2QOQvhAAAAABJRU5ErkJggg=="
         />
       ) : (
-        <div className="w-full h-full bg-muted/30 animate-pulse" aria-label={`Loading image: ${alt}`} />
+        <div className="w-full h-full bg-gray-800 animate-pulse" aria-label={`Loading image: ${alt}`} />
       )}
     </div>
   )

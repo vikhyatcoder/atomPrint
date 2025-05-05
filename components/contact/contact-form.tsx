@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, CheckCircle } from "lucide-react"
+import { submitContact } from "@/app/actions/submit-contact"
 
 export default function ContactForm() {
   const [formData, setFormData] = useState({
@@ -29,26 +30,41 @@ export default function ContactForm() {
     setFormData((prev) => ({ ...prev, subject: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
-      setIsSubmitted(true)
+    try {
+      const result = await submitContact({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+      })
 
-      // Reset form after 3 seconds
-      setTimeout(() => {
-        setIsSubmitted(false)
-        setFormData({
-          name: "",
-          email: "",
-          subject: "",
-          message: "",
-        })
-      }, 3000)
-    }, 1500)
+      setIsSubmitting(false)
+
+      if (result.success) {
+        setIsSubmitted(true)
+
+        // Reset form after 3 seconds
+        setTimeout(() => {
+          setIsSubmitted(false)
+          setFormData({
+            name: "",
+            email: "",
+            subject: "",
+            message: "",
+          })
+        }, 3000)
+      } else {
+        alert(result.message || "Failed to send message. Please try again.")
+      }
+    } catch (error) {
+      setIsSubmitting(false)
+      alert("An error occurred. Please try again.")
+      console.error(error)
+    }
   }
 
   return (

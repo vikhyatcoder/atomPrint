@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -28,15 +29,13 @@ export default function PortfolioFilters({ onFilterChange, onSearchChange }: Por
   const [searchQuery, setSearchQuery] = useState("")
 
   const handleFilterClick = (filterId: string) => {
-    if (filterId === activeFilter) return
     setActiveFilter(filterId)
     onFilterChange(filterId)
   }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchQuery(value)
-    onSearchChange(value)
+    setSearchQuery(e.target.value)
+    onSearchChange(e.target.value)
   }
 
   return (

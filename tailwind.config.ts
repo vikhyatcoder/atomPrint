@@ -97,6 +97,9 @@ const config = {
       screens: {
         xs: "480px",
       },
+      backgroundColor: {
+        "dark-navy": "#0a0c16",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

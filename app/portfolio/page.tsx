@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import PortfolioClientPage from "./PortfolioClientPage"
-import ProjectDetailsDialogWrapper from "./ProjectDetailsDialogWrapper"
 
 export const metadata: Metadata = {
   title: "Portfolio | Atom Print",
@@ -18,7 +17,6 @@ export default function PortfolioPage() {
       </p>
 
       <PortfolioClientPage />
-      <ProjectDetailsDialogWrapper />
     </div>
   )
 }

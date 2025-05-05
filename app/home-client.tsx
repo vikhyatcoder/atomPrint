@@ -10,7 +10,7 @@ import Hero from "@/components/home/hero"
 // Dynamically import non-critical components
 const Stats = dynamic(() => import("@/components/home/stats"), {
   ssr: false,
-  loading: () => <div className="py-16 bg-muted/30" aria-label="Loading stats"></div>,
+  loading: () => <div className="py-16 bg-[#0a0c16]/50" aria-label="Loading stats"></div>,
 })
 
 const Services = dynamic(() => import("@/components/home/services"), {
@@ -21,12 +21,12 @@ const Services = dynamic(() => import("@/components/home/services"), {
 // Lower priority components loaded after initial render
 const FeaturedProjects = dynamic(() => import("@/components/home/featured-projects"), {
   ssr: false,
-  loading: () => <div className="py-24 bg-muted/30" aria-label="Loading featured projects"></div>,
+  loading: () => <div className="py-24 bg-[#0a0c16]/50" aria-label="Loading featured projects"></div>,
 })
 
 const AutoTestimonials = dynamic(() => import("@/components/home/auto-testimonials"), {
   ssr: false,
-  loading: () => <div className="py-12 bg-muted/30" aria-label="Loading testimonials"></div>,
+  loading: () => <div className="py-12 bg-[#0a0c16]/50" aria-label="Loading testimonials"></div>,
 })
 
 export default function HomeClient() {
@@ -51,14 +51,14 @@ export default function HomeClient() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0c16]">
         <div className="animate-pulse text-primary text-xl">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#0a0c16]">
       <Hero />
 
       {/* Primary content - always loaded */}

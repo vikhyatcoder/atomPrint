@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Star, Upload, Loader2, CheckCircle } from "lucide-react"
+import { submitTestimonial } from "@/app/actions/submit-testimonial"
 
 export default function SubmitTestimonialForm() {
   const [rating, setRating] = useState(0)
@@ -27,28 +28,45 @@ export default function SubmitTestimonialForm() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
-      setIsSubmitted(true)
+    try {
+      const result = await submitTestimonial({
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        project: formData.project,
+        testimonial: formData.testimonial,
+        rating: rating,
+      })
 
-      // Reset form after 3 seconds
-      setTimeout(() => {
-        setIsSubmitted(false)
-        setRating(0)
-        setFormData({
-          name: "",
-          email: "",
-          role: "",
-          project: "",
-          testimonial: "",
-        })
-      }, 3000)
-    }, 1500)
+      setIsSubmitting(false)
+
+      if (result.success) {
+        setIsSubmitted(true)
+
+        // Reset form after 3 seconds
+        setTimeout(() => {
+          setIsSubmitted(false)
+          setRating(0)
+          setFormData({
+            name: "",
+            email: "",
+            role: "",
+            project: "",
+            testimonial: "",
+          })
+        }, 3000)
+      } else {
+        alert(result.message || "Failed to submit testimonial. Please try again.")
+      }
+    } catch (error) {
+      setIsSubmitting(false)
+      alert("An error occurred. Please try again.")
+      console.error(error)
+    }
   }
 
   return (
