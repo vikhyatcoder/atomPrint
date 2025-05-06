@@ -7,94 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import OptimizedImage from "@/components/optimized-image"
-
-// In a real application, this would come from a CMS or API
-const portfolioItems = [
-  {
-    id: 1,
-    title: "Modern Architectural House Model",
-    category: "Architecture",
-    tags: ["architecture", "residential", "models"],
-    image: "/images/3d-house.jpg",
-    description:
-      "A detailed architectural model of a modern minimalist house with multiple levels and open spaces. Perfect for client presentations and design visualization.",
-    client: "Architectural Design Studio",
-    material: "White PLA",
-    printTime: "24 hours",
-  },
-  {
-    id: 2,
-    title: "Functional Robotic Arm",
-    category: "Engineering",
-    tags: ["engineering", "robotics", "functional"],
-    image: "/images/robotic-arm.jpg",
-    description:
-      "A fully functional 3D printed robotic arm with servo motors and electronic components. Features a gripper mechanism and multiple points of articulation.",
-    client: "Engineering Research Lab",
-    material: "Red & White PLA, Electronic Components",
-    printTime: "16 hours",
-  },
-  {
-    id: 3,
-    title: "Lord Ganesha Figurine",
-    category: "Art & Gifts",
-    tags: ["art", "religious", "gifts"],
-    image: "/images/lord-ganesha.png",
-    description:
-      "A detailed small scale model of the printed devotee lord Ghanesha printed with high quality filament and durable in strength",
-    client: "Sandeep Mishra",
-    material: "PLA, Blue",
-    printTime: "40 Minutes",
-  },
-  {
-    id: 4,
-    title: "Gradient Phone Stand",
-    category: "Tools",
-    tags: ["tools", "accessories", "functional"],
-    image: "/images/phone-stand.webp",
-    description:
-      "A stylish phone stand with gradient coloring, designed for optimal viewing angles and cable management.",
-    client: "Tech Accessories Shop",
-    material: "PLA with Gradient Effect",
-    printTime: "4 hours",
-  },
-  {
-    id: 5,
-    title: "Miniature Boat Model",
-    category: "Education",
-    tags: ["education", "toys", "models"],
-    image: "/images/boat.jpg",
-    description:
-      "Detailed model of a boat suitable for decoration and gifting purposes and also available for architectural purposes.",
-    client: "Suman Bhati ",
-    material: "White PLA",
-    printTime: "30 Minutes",
-  },
-  {
-    id: 6,
-    title: "Articulated Dinosaur",
-    category: "Toys & Games",
-    tags: ["toys", "education", "gifts"],
-    image: "/images/dinosaur.jpg",
-    description:
-      "A cheerful model of a dino, expressing about the emotion of Joy optimal for giftings and décor purposes",
-    client: "Mandeep Singh",
-    material: "Blue and White PLA",
-    printTime: "1.5 hours",
-  },
-  {
-    id: 7,
-    title: "Spider Model",
-    category: "Education",
-    tags: ["education", "science", "biology"],
-    image: "/images/spider.jpg",
-    description:
-      "Model of a spider describing about the texture and the physical features of it best for educational purposes and demonstration",
-    client: "Jatin Bansal",
-    material: "White PLA",
-    printTime: "25 Minutes",
-  },
-]
+import ColorSelector from "./color-selector"
+import { portfolioItems, type PortfolioItem, type PortfolioItemColor } from "./portfolio-data"
 
 interface PortfolioGridProps {
   activeFilter?: string
@@ -102,8 +16,9 @@ interface PortfolioGridProps {
 }
 
 export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }: PortfolioGridProps) {
-  const [selectedItem, setSelectedItem] = useState(null)
+  const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null)
   const [activeTab, setActiveTab] = useState("details")
+  const [selectedColorIds, setSelectedColorIds] = useState<Record<number, string>>({})
 
   // Memoize filtered items to prevent unnecessary recalculations
   const filteredItems = useMemo(() => {
@@ -132,37 +47,64 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
     return filtered
   }, [activeFilter, searchQuery])
 
+  const handleItemClick = (item: PortfolioItem) => {
+    setSelectedItem(item)
+    // Initialize with default color if not already selected
+    if (!selectedColorIds[item.id]) {
+      setSelectedColorIds((prev) => ({
+        ...prev,
+        [item.id]: item.defaultColorId,
+      }))
+    }
+  }
+
+  const handleColorSelect = (itemId: number, colorId: string) => {
+    setSelectedColorIds((prev) => ({
+      ...prev,
+      [itemId]: colorId,
+    }))
+  }
+
+  const getSelectedColor = (item: PortfolioItem): PortfolioItemColor => {
+    const colorId = selectedColorIds[item.id] || item.defaultColorId
+    return item.colors.find((c) => c.id === colorId) || item.colors[0]
+  }
+
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredItems.length > 0 ? (
-          filteredItems.map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
-              className="group cursor-pointer"
-              onClick={() => setSelectedItem(item)}
-              layout="position"
-            >
-              <div className="relative h-64 overflow-hidden rounded-lg">
-                <OptimizedImage
-                  src={item.image || "/placeholder.svg"}
-                  alt={item.title}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  priority={index < 3}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80"></div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <Badge className="mb-2">{item.category}</Badge>
-                  <h3 className="text-xl font-bold text-white">{item.title}</h3>
+          filteredItems.map((item, index) => {
+            const defaultColor = item.colors.find((c) => c.id === item.defaultColorId) || item.colors[0]
+
+            return (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
+                className="group cursor-pointer"
+                onClick={() => handleItemClick(item)}
+                layout="position"
+              >
+                <div className="relative h-64 overflow-hidden rounded-lg">
+                  <OptimizedImage
+                    src={defaultColor.image || "/placeholder.svg"}
+                    alt={item.title}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    priority={index < 3}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80"></div>
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <Badge className="mb-2">{item.category}</Badge>
+                    <h3 className="text-xl font-bold text-white">{item.title}</h3>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))
+              </motion.div>
+            )
+          })
         ) : (
           <div className="col-span-full text-center py-12">
             <h3 className="text-xl font-medium mb-2">No projects found</h3>
@@ -196,7 +138,7 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="relative h-64 md:h-80 rounded-lg overflow-hidden">
                       <OptimizedImage
-                        src={selectedItem.image || "/placeholder.svg"}
+                        src={getSelectedColor(selectedItem).image || "/placeholder.svg"}
                         alt={selectedItem.title}
                         fill
                         className="object-cover"
@@ -207,10 +149,24 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
                     <div>
                       <p className="mb-4">{selectedItem.description}</p>
 
-                      <div className="space-y-2 mb-6">
+                      <div className="space-y-4 mb-6">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Client:</span>
                           <span className="font-medium">{selectedItem.client}</span>
+                        </div>
+
+                        <ColorSelector
+                          colors={selectedItem.colors}
+                          selectedColorId={selectedColorIds[selectedItem.id] || selectedItem.defaultColorId}
+                          onColorSelect={(colorId) => handleColorSelect(selectedItem.id, colorId)}
+                          className="mb-4"
+                        />
+
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Price:</span>
+                          <span className="font-medium">
+                            {getSelectedColor(selectedItem).price || "Contact for pricing"}
+                          </span>
                         </div>
                       </div>
 
@@ -220,6 +176,12 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
                             {tag}
                           </Badge>
                         ))}
+                      </div>
+
+                      <div className="mt-6">
+                        <Button className="w-full" disabled={!getSelectedColor(selectedItem).inStock}>
+                          {getSelectedColor(selectedItem).inStock ? "Add to Cart" : "Out of Stock"}
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -250,12 +212,16 @@ export default function PortfolioGrid({ activeFilter = "all", searchQuery = "" }
                           <span className="text-muted-foreground">Post-Processing:</span>
                           <span className="font-medium">Sanding, Painting</span>
                         </div>
+                        <div className="flex justify-between border-b pb-2">
+                          <span className="text-muted-foreground">Available Colors:</span>
+                          <span className="font-medium">{selectedItem.colors.length}</span>
+                        </div>
                       </div>
                     </div>
 
                     <div className="relative h-64 md:h-80 rounded-lg overflow-hidden">
                       <OptimizedImage
-                        src={selectedItem.image || "/placeholder.svg"}
+                        src={getSelectedColor(selectedItem).image || "/placeholder.svg"}
                         alt={selectedItem.title}
                         fill
                         className="object-cover"
