@@ -14,6 +14,7 @@ const navigation = [
   { name: "Testimonials", href: "/testimonials" },
   { name: "Contact", href: "/contact" },
   { name: "Terms of Services", href: "/terms" },
+  { name: "3D analyzer", href: "/3d-analyzer" },
 ]
 
 export default function Navbar() {
