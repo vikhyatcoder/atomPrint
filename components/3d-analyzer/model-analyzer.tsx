@@ -4,11 +4,12 @@ import { useState, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Info, Upload, Eye, Calculator } from "lucide-react"
+import { Info, Upload, Eye, Calculator, Settings } from "lucide-react"
 import FileUploader from "./file-uploader"
 import ModelViewer from "./simple-3d-renderer"
 import PrintSettings from "./print-settings"
 import AnalysisResults from "./analysis-results"
+import { useMediaQuery } from "@/hooks/use-media-query"
 import type { ModelData, PrintSettings as PrintSettingsType, AnalysisResults as AnalysisResultsType } from "./types"
 
 export default function ModelAnalyzer() {
@@ -19,11 +20,12 @@ export default function ModelAnalyzer() {
     supportsEnabled: false,
     layerHeight: 0.2,
     printSpeed: 50,
-    scaleFactor: 1.0, // Add this line
+    scaleFactor: 1.0,
   })
   const [analysisResults, setAnalysisResults] = useState<AnalysisResultsType | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [activeTab, setActiveTab] = useState("upload")
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
   const handleFileUpload = useCallback((data: ModelData) => {
     setModelData(data)
@@ -113,47 +115,61 @@ export default function ModelAnalyzer() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">3D Model Analyzer</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+        <div className="text-center mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-4">3D Model Analyzer</h1>
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
             Upload your 3D model, configure print settings, and get detailed analysis for optimal 3D printing results.
           </p>
         </div>
 
-        <Alert className="mb-6 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+        <Alert className="mb-4 md:mb-6 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-          <AlertDescription className="text-blue-800 dark:text-blue-200">
+          <AlertDescription className="text-blue-800 dark:text-blue-200 text-sm">
             <strong>How it works:</strong> Upload your STL file, configure your print settings, then analyze to get
             detailed information about print time, material usage, and costs.
           </AlertDescription>
         </Alert>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="upload" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              Upload
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+          <TabsList className={`grid w-full ${isMobile ? "grid-cols-2" : "grid-cols-4"} gap-1`}>
+            <TabsTrigger value="upload" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
+              <Upload className="h-3 w-3 md:h-4 md:w-4" />
+              {!isMobile && "Upload"}
             </TabsTrigger>
-            <TabsTrigger value="viewer" disabled={!modelData} className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              Viewer
+            <TabsTrigger
+              value="viewer"
+              disabled={!modelData}
+              className="flex items-center gap-1 md:gap-2 text-xs md:text-sm"
+            >
+              <Eye className="h-3 w-3 md:h-4 md:w-4" />
+              {!isMobile && "Viewer"}
             </TabsTrigger>
-            <TabsTrigger value="settings" disabled={!modelData} className="flex items-center gap-2">
-              <Calculator className="h-4 w-4" />
-              Settings
-            </TabsTrigger>
-            <TabsTrigger value="analysis" disabled={!analysisResults} className="flex items-center gap-2">
-              <Calculator className="h-4 w-4" />
-              Analysis
+            {isMobile ? (
+              <TabsTrigger value="settings" disabled={!modelData} className="flex items-center gap-1 text-xs">
+                <Settings className="h-3 w-3" />
+              </TabsTrigger>
+            ) : (
+              <TabsTrigger value="settings" disabled={!modelData} className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Settings
+              </TabsTrigger>
+            )}
+            <TabsTrigger
+              value="analysis"
+              disabled={!analysisResults}
+              className="flex items-center gap-1 md:gap-2 text-xs md:text-sm"
+            >
+              <Calculator className="h-3 w-3 md:h-4 md:w-4" />
+              {!isMobile && "Analysis"}
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="upload" className="space-y-6">
+          <TabsContent value="upload" className="space-y-4 md:space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Upload 3D Model</CardTitle>
-                <CardDescription>
-                  Upload your STL or OBJ file to begin analysis. Maximum file size: 50MB.
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg md:text-xl">Upload 3D Model</CardTitle>
+                <CardDescription className="text-sm">
+                  Upload your STL file to begin analysis. Maximum file size: 50MB.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -162,30 +178,32 @@ export default function ModelAnalyzer() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="viewer" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <TabsContent value="viewer" className="space-y-4 md:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
               <div className="lg:col-span-2">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>3D Model Viewer</CardTitle>
-                    <CardDescription>
-                      Interact with your model: rotate, zoom, and pan to inspect all angles.
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg md:text-xl">3D Model Viewer</CardTitle>
+                    <CardDescription className="text-sm">
+                      {isMobile
+                        ? "Touch to rotate, pinch to zoom"
+                        : "Interact with your model: rotate, zoom, and pan to inspect all angles."}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>{modelData && <ModelViewer modelData={modelData} />}</CardContent>
+                  <CardContent className="p-2 md:p-6">{modelData && <ModelViewer modelData={modelData} />}</CardContent>
                 </Card>
               </div>
               <div>
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Model Information</CardTitle>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg md:text-xl">Model Information</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-3">
                     {modelData && (
-                      <div className="space-y-3">
+                      <>
                         <div>
                           <span className="text-sm font-medium text-muted-foreground">File Name:</span>
-                          <p className="font-medium">{modelData.fileName}</p>
+                          <p className="font-medium text-sm md:text-base break-all">{modelData.fileName}</p>
                         </div>
                         <div>
                           <span className="text-sm font-medium text-muted-foreground">File Size:</span>
@@ -197,12 +215,12 @@ export default function ModelAnalyzer() {
                         </div>
                         <div>
                           <span className="text-sm font-medium text-muted-foreground">Dimensions (mm):</span>
-                          <p className="font-medium">
+                          <p className="font-medium text-sm">
                             {modelData.boundingBox.max.x.toFixed(1)} × {modelData.boundingBox.max.y.toFixed(1)} ×{" "}
                             {modelData.boundingBox.max.z.toFixed(1)}
                           </p>
                         </div>
-                      </div>
+                      </>
                     )}
                   </CardContent>
                 </Card>
@@ -210,8 +228,8 @@ export default function ModelAnalyzer() {
             </div>
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="settings" className="space-y-4 md:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               <PrintSettings
                 settings={printSettings}
                 onSettingsChange={setPrintSettings}
@@ -219,25 +237,29 @@ export default function ModelAnalyzer() {
                 isAnalyzing={isAnalyzing}
                 disabled={!modelData}
               />
-              <div className="lg:col-span-1">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Preview</CardTitle>
-                    <CardDescription>Live preview of your model with current settings</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {modelData && (
-                      <div className="h-64">
-                        <ModelViewer modelData={modelData} compact />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+              {!isMobile && (
+                <div className="lg:col-span-1">
+                  <Card>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-lg">Preview</CardTitle>
+                      <CardDescription className="text-sm">
+                        Live preview of your model with current settings
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {modelData && (
+                        <div className="h-64">
+                          <ModelViewer modelData={modelData} compact />
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
           </TabsContent>
 
-          <TabsContent value="analysis" className="space-y-6">
+          <TabsContent value="analysis" className="space-y-4 md:space-y-6">
             {analysisResults && (
               <AnalysisResults results={analysisResults} settings={printSettings} modelData={modelData!} />
             )}

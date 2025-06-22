@@ -5,6 +5,7 @@ import type React from "react"
 import { useEffect, useRef, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { RotateCcw, ZoomIn, ZoomOut, Move3D } from "lucide-react"
+import { useMediaQuery } from "@/hooks/use-media-query"
 import type { ModelData } from "./types"
 
 interface Simple3DRendererProps {
@@ -18,8 +19,10 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
   const [rotation, setRotation] = useState({ x: 0.3, y: 0.3, z: 0 })
   const [zoom, setZoom] = useState(1)
   const [isDragging, setIsDragging] = useState(false)
-  const [lastMouse, setLastMouse] = useState({ x: 0, y: 0 })
+  const [lastTouch, setLastTouch] = useState({ x: 0, y: 0 })
   const [autoRotate, setAutoRotate] = useState(true)
+  const [lastPinchDistance, setLastPinchDistance] = useState(0)
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
   const project3D = useCallback(
     (x: number, y: number, z: number, width: number, height: number) => {
@@ -92,13 +95,17 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
 
     const scale = (Math.min(width, height) * 0.3) / maxDim
 
+    // Reduce triangle count for mobile performance
+    const triangleStep = isMobile ? 3 : 1
+    const maxTriangles = isMobile ? 1000 : 5000
+
     // Collect triangles with depth for sorting
     const triangles: Array<{
       points: Array<{ x: number; y: number; z: number }>
       avgZ: number
     }> = []
 
-    for (let i = 0; i < vertices.length; i += 9) {
+    for (let i = 0; i < vertices.length && triangles.length < maxTriangles; i += 9 * triangleStep) {
       const points = []
       let avgZ = 0
 
@@ -139,23 +146,29 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
       ctx.fillStyle = `rgba(0, 255, 136, ${alpha * 0.3})`
       ctx.fill()
 
-      // Draw wireframe
+      // Draw wireframe (thicker lines on mobile for better visibility)
       ctx.strokeStyle = `rgba(0, 255, 136, ${alpha})`
-      ctx.lineWidth = 0.5
+      ctx.lineWidth = isMobile ? 1 : 0.5
       ctx.stroke()
     })
 
-    // Draw info overlay
+    // Draw info overlay (smaller on mobile)
+    const overlayWidth = isMobile ? 160 : 200
+    const overlayHeight = isMobile ? 60 : 75
+    const fontSize = isMobile ? 10 : 12
+
     ctx.fillStyle = "rgba(0, 0, 0, 0.7)"
-    ctx.fillRect(10, 10, 200, 75) // Increase height for additional info
+    ctx.fillRect(10, 10, overlayWidth, overlayHeight)
 
     ctx.fillStyle = "white"
-    ctx.font = "12px sans-serif"
+    ctx.font = `${fontSize}px sans-serif`
     ctx.fillText(`Triangles: ${modelData.triangleCount?.toLocaleString()}`, 15, 25)
     ctx.fillText(`Volume: ${modelData.volume.toFixed(2)} cm³`, 15, 40)
-    ctx.fillText(`Zoom: ${(zoom * 100).toFixed(0)}%`, 15, 55)
-    ctx.fillText(`Scale: 100%`, 15, 70) // Add scale info
-  }, [modelData, project3D])
+    if (!isMobile) {
+      ctx.fillText(`Zoom: ${(zoom * 100).toFixed(0)}%`, 15, 55)
+      ctx.fillText(`Scale: 100%`, 15, 70)
+    }
+  }, [modelData, project3D, isMobile])
 
   // Animation loop
   useEffect(() => {
@@ -179,17 +192,75 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
     }
   }, [render, autoRotate, isDragging])
 
+  // Touch event handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault()
+    setAutoRotate(false)
+
+    if (e.touches.length === 1) {
+      setIsDragging(true)
+      setLastTouch({ x: e.touches[0].clientX, y: e.touches[0].clientY })
+    } else if (e.touches.length === 2) {
+      // Pinch to zoom
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + Math.pow(touch2.clientY - touch1.clientY, 2),
+      )
+      setLastPinchDistance(distance)
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault()
+
+    if (e.touches.length === 1 && isDragging) {
+      const deltaX = e.touches[0].clientX - lastTouch.x
+      const deltaY = e.touches[0].clientY - lastTouch.y
+
+      setRotation((prev) => ({
+        ...prev,
+        x: prev.x + deltaY * 0.01,
+        y: prev.y + deltaX * 0.01,
+      }))
+
+      setLastTouch({ x: e.touches[0].clientX, y: e.touches[0].clientY })
+    } else if (e.touches.length === 2) {
+      // Pinch to zoom
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + Math.pow(touch2.clientY - touch1.clientY, 2),
+      )
+
+      if (lastPinchDistance > 0) {
+        const scale = distance / lastPinchDistance
+        setZoom((prev) => Math.max(0.1, Math.min(5, prev * scale)))
+      }
+
+      setLastPinchDistance(distance)
+    }
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    setLastPinchDistance(0)
+    setTimeout(() => setAutoRotate(true), 2000) // Resume auto-rotation after 2 seconds
+  }
+
+  // Mouse event handlers (for desktop)
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
     setAutoRotate(false)
-    setLastMouse({ x: e.clientX, y: e.clientY })
+    setLastTouch({ x: e.clientX, y: e.clientY })
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return
 
-    const deltaX = e.clientX - lastMouse.x
-    const deltaY = e.clientY - lastMouse.y
+    const deltaX = e.clientX - lastTouch.x
+    const deltaY = e.clientY - lastTouch.y
 
     setRotation((prev) => ({
       ...prev,
@@ -197,7 +268,7 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
       y: prev.y + deltaX * 0.01,
     }))
 
-    setLastMouse({ x: e.clientX, y: e.clientY })
+    setLastTouch({ x: e.clientX, y: e.clientY })
   }
 
   const handleMouseUp = () => {
@@ -225,14 +296,21 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
     setZoom((prev) => Math.max(0.1, prev * 0.8))
   }
 
+  const canvasHeight = compact ? (isMobile ? 250 : 300) : isMobile ? 300 : 500
+
   return (
     <div className="relative">
       <canvas
         ref={canvasRef}
-        width={800}
-        height={compact ? 300 : 500}
-        className="w-full rounded-lg border bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-800 dark:to-slate-900 cursor-grab active:cursor-grabbing"
-        style={{ height: compact ? 300 : 500 }}
+        width={isMobile ? 600 : 800}
+        height={canvasHeight}
+        className="w-full rounded-lg border bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-800 dark:to-slate-900 touch-none"
+        style={{ height: canvasHeight }}
+        // Touch events
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        // Mouse events (for desktop)
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -241,23 +319,29 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
       />
 
       {!compact && (
-        <div className="absolute top-4 right-4 flex flex-col gap-2">
-          <Button size="sm" variant="secondary" onClick={resetView} title="Reset View">
-            <RotateCcw className="h-4 w-4" />
+        <div
+          className={`absolute top-2 md:top-4 right-2 md:right-4 flex ${isMobile ? "flex-row gap-1" : "flex-col gap-2"}`}
+        >
+          <Button size={isMobile ? "sm" : "sm"} variant="secondary" onClick={resetView} title="Reset View">
+            <RotateCcw className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
           </Button>
-          <Button size="sm" variant="secondary" onClick={zoomIn} title="Zoom In">
-            <ZoomIn className="h-4 w-4" />
+          <Button size={isMobile ? "sm" : "sm"} variant="secondary" onClick={zoomIn} title="Zoom In">
+            <ZoomIn className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
           </Button>
-          <Button size="sm" variant="secondary" onClick={zoomOut} title="Zoom Out">
-            <ZoomOut className="h-4 w-4" />
+          <Button size={isMobile ? "sm" : "sm"} variant="secondary" onClick={zoomOut} title="Zoom Out">
+            <ZoomOut className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
           </Button>
         </div>
       )}
 
-      <div className="absolute bottom-4 left-4 bg-black/50 text-white px-3 py-1 rounded text-sm">
-        <div className="flex items-center gap-2">
-          <Move3D className="h-3 w-3" />
-          <span>Click and drag to rotate • Scroll to zoom • Auto-rotating</span>
+      <div
+        className={`absolute bottom-2 md:bottom-4 left-2 md:left-4 bg-black/50 text-white px-2 md:px-3 py-1 rounded ${isMobile ? "text-xs" : "text-sm"}`}
+      >
+        <div className="flex items-center gap-1 md:gap-2">
+          <Move3D className={`${isMobile ? "h-2 w-2" : "h-3 w-3"}`} />
+          <span>
+            {isMobile ? "Touch to rotate • Pinch to zoom" : "Click and drag to rotate • Scroll to zoom • Auto-rotating"}
+          </span>
         </div>
       </div>
     </div>

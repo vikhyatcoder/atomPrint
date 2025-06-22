@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Upload, File, CheckCircle, AlertCircle, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useMediaQuery } from "@/hooks/use-media-query"
 import type { ModelData } from "./types"
 
 interface FileUploaderProps {
@@ -24,6 +25,7 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
   const parseSTLBinary = useCallback((buffer: ArrayBuffer) => {
     const view = new DataView(buffer)
@@ -289,7 +291,8 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
       <div
         {...getRootProps()}
         className={cn(
-          "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+          "border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors",
+          isMobile ? "p-6" : "p-8",
           isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25",
           isProcessing && "pointer-events-none opacity-50",
         )}
@@ -297,16 +300,18 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
         <input {...getInputProps()} />
 
         <div className="flex flex-col items-center space-y-4">
-          <div className="p-4 rounded-full bg-muted">
-            <Upload className="h-8 w-8 text-muted-foreground" />
+          <div className={`p-3 md:p-4 rounded-full bg-muted`}>
+            <Upload className={`${isMobile ? "h-6 w-6" : "h-8 w-8"} text-muted-foreground`} />
           </div>
 
           <div>
-            <p className="text-lg font-medium">{isDragActive ? "Drop your file here" : "Drag & drop your 3D model"}</p>
-            <p className="text-sm text-muted-foreground mt-1">or click to browse files</p>
+            <p className={`${isMobile ? "text-base" : "text-lg"} font-medium`}>
+              {isDragActive ? "Drop your file here" : "Drag & drop your 3D model"}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">or tap to browse files</p>
           </div>
 
-          <Button variant="outline" disabled={isProcessing}>
+          <Button variant="outline" disabled={isProcessing} size={isMobile ? "sm" : "default"}>
             Choose File
           </Button>
 
@@ -317,10 +322,12 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
       {uploadedFile && (
         <div className="bg-muted/50 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-2">
-              <File className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">{uploadedFile.name}</span>
-              <span className="text-xs text-muted-foreground">({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
+            <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-sm font-medium truncate">{uploadedFile.name}</span>
+              <span className="text-xs text-muted-foreground flex-shrink-0">
+                ({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)
+              </span>
             </div>
 
             {!isProcessing && (
@@ -351,7 +358,7 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="text-sm">{error}</AlertDescription>
         </Alert>
       )}
     </div>

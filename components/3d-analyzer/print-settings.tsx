@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Loader2, Calculator } from "lucide-react"
+import { useMediaQuery } from "@/hooks/use-media-query"
 import type { PrintSettings as PrintSettingsType } from "./types"
 
 interface PrintSettingsProps {
@@ -33,19 +34,25 @@ export default function PrintSettings({
   isAnalyzing,
   disabled,
 }: PrintSettingsProps) {
+  const isMobile = useMediaQuery("(max-width: 768px)")
+
   const updateSetting = <K extends keyof PrintSettingsType>(key: K, value: PrintSettingsType[K]) => {
     onSettingsChange({ ...settings, [key]: value })
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Print Settings</CardTitle>
-        <CardDescription>Configure your 3D printing parameters for accurate analysis</CardDescription>
+      <CardHeader className={`${isMobile ? "pb-3" : "pb-4"}`}>
+        <CardTitle className={`${isMobile ? "text-lg" : "text-xl"}`}>Print Settings</CardTitle>
+        <CardDescription className="text-sm">
+          Configure your 3D printing parameters for accurate analysis
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 md:space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="material">Material Type</Label>
+          <Label htmlFor="material" className="text-sm">
+            Material Type
+          </Label>
           <Select
             value={settings.material}
             onValueChange={(value) => updateSetting("material", value)}
@@ -57,7 +64,7 @@ export default function PrintSettings({
             <SelectContent>
               {materials.map((material) => (
                 <SelectItem key={material.value} value={material.value}>
-                  {material.label}
+                  {isMobile ? material.value : material.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -66,7 +73,9 @@ export default function PrintSettings({
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label htmlFor="scale">Model Scale</Label>
+            <Label htmlFor="scale" className="text-sm">
+              Model Scale
+            </Label>
             <span className="text-sm font-medium">{(settings.scaleFactor * 100).toFixed(0)}%</span>
           </div>
           <Slider
@@ -80,16 +89,18 @@ export default function PrintSettings({
             className="w-full"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>10% (Tiny)</span>
-            <span>100% (Original)</span>
-            <span>300% (Large)</span>
+            <span>10%</span>
+            <span>100%</span>
+            <span>300%</span>
           </div>
           <div className="text-xs text-muted-foreground">Scaling affects volume, print time, and material usage</div>
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label htmlFor="infill">Infill Percentage</Label>
+            <Label htmlFor="infill" className="text-sm">
+              Infill Percentage
+            </Label>
             <span className="text-sm font-medium">{settings.infillPercentage}%</span>
           </div>
           <Slider
@@ -103,15 +114,17 @@ export default function PrintSettings({
             className="w-full"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>0% (Hollow)</span>
-            <span>50% (Standard)</span>
-            <span>100% (Solid)</span>
+            <span>0%</span>
+            <span>50%</span>
+            <span>100%</span>
           </div>
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label htmlFor="layer-height">Layer Height (mm)</Label>
+            <Label htmlFor="layer-height" className="text-sm">
+              Layer Height (mm)
+            </Label>
             <span className="text-sm font-medium">{settings.layerHeight}mm</span>
           </div>
           <Slider
@@ -125,14 +138,16 @@ export default function PrintSettings({
             className="w-full"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>0.1mm (Fine)</span>
-            <span>0.2mm (Standard)</span>
-            <span>0.4mm (Draft)</span>
+            <span>0.1mm</span>
+            <span>0.2mm</span>
+            <span>0.4mm</span>
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="print-speed">Print Speed (mm/s)</Label>
+          <Label htmlFor="print-speed" className="text-sm">
+            Print Speed (mm/s)
+          </Label>
           <Input
             id="print-speed"
             type="number"
@@ -146,8 +161,10 @@ export default function PrintSettings({
 
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label htmlFor="supports">Support Structures</Label>
-            <p className="text-sm text-muted-foreground">Enable for overhangs and bridges</p>
+            <Label htmlFor="supports" className="text-sm">
+              Support Structures
+            </Label>
+            <p className="text-xs text-muted-foreground">Enable for overhangs and bridges</p>
           </div>
           <Switch
             id="supports"
@@ -157,7 +174,12 @@ export default function PrintSettings({
           />
         </div>
 
-        <Button onClick={onAnalyze} disabled={disabled || isAnalyzing} className="w-full" size="lg">
+        <Button
+          onClick={onAnalyze}
+          disabled={disabled || isAnalyzing}
+          className="w-full"
+          size={isMobile ? "default" : "lg"}
+        >
           {isAnalyzing ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
