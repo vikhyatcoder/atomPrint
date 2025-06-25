@@ -4,8 +4,11 @@ import type React from "react"
 
 import { useEffect, useRef, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { RotateCcw, ZoomIn, ZoomOut, Move3D } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { RotateCcw, ZoomIn, ZoomOut, Move3D, Maximize2, Minimize2, Play, Pause } from "lucide-react"
 import { useMediaQuery } from "@/hooks/use-media-query"
+import { useDeviceCapabilities } from "@/hooks/use-device-capabilities"
 import type { ModelData } from "./types"
 
 interface Simple3DRendererProps {
@@ -22,7 +25,23 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
   const [lastTouch, setLastTouch] = useState({ x: 0, y: 0 })
   const [autoRotate, setAutoRotate] = useState(true)
   const [lastPinchDistance, setLastPinchDistance] = useState(0)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [renderQuality, setRenderQuality] = useState<"high" | "medium" | "low">("high")
+
   const isMobile = useMediaQuery("(max-width: 768px)")
+  const isTablet = useMediaQuery("(max-width: 1024px)")
+  const { isLowEndDevice, hasTouchScreen } = useDeviceCapabilities()
+
+  // Adaptive quality based on device capabilities
+  useEffect(() => {
+    if (isLowEndDevice) {
+      setRenderQuality("low")
+    } else if (isMobile) {
+      setRenderQuality("medium")
+    } else {
+      setRenderQuality("high")
+    }
+  }, [isLowEndDevice, isMobile])
 
   const project3D = useCallback(
     (x: number, y: number, z: number, width: number, height: number) => {
@@ -72,10 +91,15 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
     const width = canvas.width
     const height = canvas.height
 
-    // Clear canvas with gradient background
+    // Clear canvas with adaptive gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, height)
-    gradient.addColorStop(0, "#f8fafc")
-    gradient.addColorStop(1, "#e2e8f0")
+    if (isFullscreen) {
+      gradient.addColorStop(0, "#0f172a")
+      gradient.addColorStop(1, "#1e293b")
+    } else {
+      gradient.addColorStop(0, "#f8fafc")
+      gradient.addColorStop(1, "#e2e8f0")
+    }
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
 
@@ -93,11 +117,16 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
     const modelDepth = bounds.max.z - bounds.min.z
     const maxDim = Math.max(modelWidth, modelHeight, modelDepth)
 
-    const scale = (Math.min(width, height) * 0.3) / maxDim
+    const scale = (Math.min(width, height) * 0.35) / maxDim
 
-    // Reduce triangle count for mobile performance
-    const triangleStep = isMobile ? 3 : 1
-    const maxTriangles = isMobile ? 1000 : 5000
+    // Adaptive triangle rendering based on quality
+    const qualitySettings = {
+      high: { step: 1, maxTriangles: 8000, lineWidth: 0.5 },
+      medium: { step: 2, maxTriangles: 3000, lineWidth: 0.8 },
+      low: { step: 4, maxTriangles: 1000, lineWidth: 1.2 },
+    }
+
+    const { step: triangleStep, maxTriangles, lineWidth } = qualitySettings[renderQuality]
 
     // Collect triangles with depth for sorting
     const triangles: Array<{
@@ -128,58 +157,75 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
     // Sort triangles by depth (back to front)
     triangles.sort((a, b) => a.avgZ - b.avgZ)
 
-    // Render triangles
+    // Render triangles with enhanced mobile-friendly styling
     triangles.forEach((triangle, index) => {
       const { points } = triangle
 
-      // Calculate lighting based on normal (simplified)
-      const lightIntensity = 0.5 + 0.5 * Math.sin(index * 0.01)
-      const alpha = Math.max(0.1, Math.min(0.8, lightIntensity))
+      // Enhanced lighting calculation
+      const lightIntensity = 0.4 + 0.6 * Math.sin(index * 0.008 + rotation.y)
+      const alpha = Math.max(0.15, Math.min(0.9, lightIntensity))
 
-      // Fill triangle
+      // Fill triangle with gradient effect
       ctx.beginPath()
       ctx.moveTo(points[0].x, points[0].y)
       ctx.lineTo(points[1].x, points[1].y)
       ctx.lineTo(points[2].x, points[2].y)
       ctx.closePath()
 
-      ctx.fillStyle = `rgba(0, 255, 136, ${alpha * 0.3})`
+      // Adaptive colors based on fullscreen mode
+      const baseColor = isFullscreen ? [0, 255, 136] : [0, 200, 120]
+      ctx.fillStyle = `rgba(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]}, ${alpha * 0.4})`
       ctx.fill()
 
-      // Draw wireframe (thicker lines on mobile for better visibility)
-      ctx.strokeStyle = `rgba(0, 255, 136, ${alpha})`
-      ctx.lineWidth = isMobile ? 1 : 0.5
+      // Enhanced wireframe with better visibility
+      ctx.strokeStyle = `rgba(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]}, ${alpha * 0.8})`
+      ctx.lineWidth = lineWidth
       ctx.stroke()
     })
 
-    // Draw info overlay (smaller on mobile)
-    const overlayWidth = isMobile ? 160 : 200
-    const overlayHeight = isMobile ? 60 : 75
-    const fontSize = isMobile ? 10 : 12
+    // Enhanced info overlay with better mobile design
+    const overlayWidth = isMobile ? 180 : 220
+    const overlayHeight = isMobile ? 70 : 85
+    const fontSize = isMobile ? 11 : 13
+    const padding = isMobile ? 8 : 12
 
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)"
-    ctx.fillRect(10, 10, overlayWidth, overlayHeight)
+    // Rounded overlay background
+    ctx.fillStyle = isFullscreen ? "rgba(15, 23, 42, 0.9)" : "rgba(0, 0, 0, 0.8)"
+    ctx.beginPath()
+    ctx.roundRect(padding, padding, overlayWidth, overlayHeight, 8)
+    ctx.fill()
 
-    ctx.fillStyle = "white"
-    ctx.font = `${fontSize}px sans-serif`
-    ctx.fillText(`Triangles: ${modelData.triangleCount?.toLocaleString()}`, 15, 25)
-    ctx.fillText(`Volume: ${modelData.volume.toFixed(2)} cm³`, 15, 40)
-    if (!isMobile) {
-      ctx.fillText(`Zoom: ${(zoom * 100).toFixed(0)}%`, 15, 55)
-      ctx.fillText(`Scale: 100%`, 15, 70)
+    // Info text with better spacing
+    ctx.fillStyle = isFullscreen ? "#e2e8f0" : "white"
+    ctx.font = `${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
+
+    const lineHeight = fontSize + 4
+    ctx.fillText(`Triangles: ${modelData.triangleCount?.toLocaleString()}`, padding + 8, padding + lineHeight)
+    ctx.fillText(`Volume: ${modelData.volume.toFixed(2)} cm³`, padding + 8, padding + lineHeight * 2)
+
+    if (!isMobile || isFullscreen) {
+      ctx.fillText(`Quality: ${renderQuality.toUpperCase()}`, padding + 8, padding + lineHeight * 3)
+      ctx.fillText(`Zoom: ${(zoom * 100).toFixed(0)}%`, padding + 8, padding + lineHeight * 4)
     }
-  }, [modelData, project3D, isMobile])
+  }, [modelData, project3D, isMobile, isFullscreen, renderQuality, rotation.y, zoom])
 
-  // Animation loop
+  // Optimized animation loop with frame rate control
   useEffect(() => {
-    const animate = () => {
-      if (autoRotate && !isDragging) {
-        setRotation((prev) => ({
-          ...prev,
-          y: prev.y + 0.005,
-        }))
+    let lastFrameTime = 0
+    const targetFPS = isLowEndDevice ? 30 : isMobile ? 45 : 60
+    const frameInterval = 1000 / targetFPS
+
+    const animate = (currentTime: number) => {
+      if (currentTime - lastFrameTime >= frameInterval) {
+        if (autoRotate && !isDragging) {
+          setRotation((prev) => ({
+            ...prev,
+            y: prev.y + (isLowEndDevice ? 0.003 : 0.005),
+          }))
+        }
+        render()
+        lastFrameTime = currentTime
       }
-      render()
       animationRef.current = requestAnimationFrame(animate)
     }
 
@@ -190,9 +236,9 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [render, autoRotate, isDragging])
+  }, [render, autoRotate, isDragging, isLowEndDevice])
 
-  // Touch event handlers
+  // Enhanced touch event handlers with better gesture recognition
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault()
     setAutoRotate(false)
@@ -218,15 +264,17 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
       const deltaX = e.touches[0].clientX - lastTouch.x
       const deltaY = e.touches[0].clientY - lastTouch.y
 
+      // Enhanced sensitivity for mobile
+      const sensitivity = isMobile ? 0.012 : 0.01
       setRotation((prev) => ({
         ...prev,
-        x: prev.x + deltaY * 0.01,
-        y: prev.y + deltaX * 0.01,
+        x: Math.max(-Math.PI / 2, Math.min(Math.PI / 2, prev.x + deltaY * sensitivity)),
+        y: prev.y + deltaX * sensitivity,
       }))
 
       setLastTouch({ x: e.touches[0].clientX, y: e.touches[0].clientY })
     } else if (e.touches.length === 2) {
-      // Pinch to zoom
+      // Enhanced pinch to zoom
       const touch1 = e.touches[0]
       const touch2 = e.touches[1]
       const distance = Math.sqrt(
@@ -235,7 +283,8 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
 
       if (lastPinchDistance > 0) {
         const scale = distance / lastPinchDistance
-        setZoom((prev) => Math.max(0.1, Math.min(5, prev * scale)))
+        const newZoom = zoom * scale
+        setZoom(Math.max(0.2, Math.min(8, newZoom)))
       }
 
       setLastPinchDistance(distance)
@@ -246,10 +295,12 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
     e.preventDefault()
     setIsDragging(false)
     setLastPinchDistance(0)
-    setTimeout(() => setAutoRotate(true), 2000) // Resume auto-rotation after 2 seconds
+
+    // Resume auto-rotation after interaction
+    setTimeout(() => setAutoRotate(true), 3000)
   }
 
-  // Mouse event handlers (for desktop)
+  // Enhanced mouse event handlers for desktop
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true)
     setAutoRotate(false)
@@ -264,7 +315,7 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
 
     setRotation((prev) => ({
       ...prev,
-      x: prev.x + deltaY * 0.01,
+      x: Math.max(-Math.PI / 2, Math.min(Math.PI / 2, prev.x + deltaY * 0.01)),
       y: prev.y + deltaX * 0.01,
     }))
 
@@ -273,13 +324,13 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
 
   const handleMouseUp = () => {
     setIsDragging(false)
-    setTimeout(() => setAutoRotate(true), 2000) // Resume auto-rotation after 2 seconds
+    setTimeout(() => setAutoRotate(true), 2000)
   }
 
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault()
     const delta = e.deltaY > 0 ? 0.9 : 1.1
-    setZoom((prev) => Math.max(0.1, Math.min(5, prev * delta)))
+    setZoom((prev) => Math.max(0.2, Math.min(8, prev * delta)))
   }
 
   const resetView = () => {
@@ -289,61 +340,160 @@ export default function Simple3DRenderer({ modelData, compact = false }: Simple3
   }
 
   const zoomIn = () => {
-    setZoom((prev) => Math.min(5, prev * 1.2))
+    setZoom((prev) => Math.min(8, prev * 1.3))
   }
 
   const zoomOut = () => {
-    setZoom((prev) => Math.max(0.1, prev * 0.8))
+    setZoom((prev) => Math.max(0.2, prev * 0.7))
   }
 
-  const canvasHeight = compact ? (isMobile ? 250 : 300) : isMobile ? 300 : 500
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen)
+  }
+
+  const toggleAutoRotate = () => {
+    setAutoRotate(!autoRotate)
+  }
+
+  const canvasHeight = isFullscreen ? window.innerHeight - 100 : compact ? (isMobile ? 280 : 320) : isMobile ? 350 : 500
+
+  const canvasWidth = isFullscreen ? window.innerWidth - 40 : isMobile ? 700 : 900
 
   return (
-    <div className="relative">
-      <canvas
-        ref={canvasRef}
-        width={isMobile ? 600 : 800}
-        height={canvasHeight}
-        className="w-full rounded-lg border bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-800 dark:to-slate-900 touch-none"
-        style={{ height: canvasHeight }}
-        // Touch events
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        // Mouse events (for desktop)
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
-      />
+    <Card className={`relative overflow-hidden ${isFullscreen ? "fixed inset-4 z-50 bg-slate-900" : ""}`}>
+      <CardContent className="p-0 relative">
+        <canvas
+          ref={canvasRef}
+          width={canvasWidth}
+          height={canvasHeight}
+          className={`w-full rounded-lg border-0 touch-none ${
+            isFullscreen
+              ? "bg-slate-900"
+              : "bg-gradient-to-b from-slate-50 to-slate-200 dark:from-slate-800 dark:to-slate-900"
+          }`}
+          style={{ height: canvasHeight }}
+          // Touch events
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          // Mouse events (for desktop)
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onWheel={handleWheel}
+        />
 
-      {!compact && (
+        {/* Enhanced Control Panel */}
         <div
-          className={`absolute top-2 md:top-4 right-2 md:right-4 flex ${isMobile ? "flex-row gap-1" : "flex-col gap-2"}`}
+          className={`absolute ${isMobile ? "top-2 right-2" : "top-4 right-4"} flex ${
+            isMobile ? "flex-row gap-1" : "flex-col gap-2"
+          } z-10`}
         >
-          <Button size={isMobile ? "sm" : "sm"} variant="secondary" onClick={resetView} title="Reset View">
+          <Button
+            size={isMobile ? "sm" : "sm"}
+            variant="secondary"
+            onClick={resetView}
+            title="Reset View"
+            className="bg-white/90 hover:bg-white shadow-lg"
+          >
             <RotateCcw className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
           </Button>
-          <Button size={isMobile ? "sm" : "sm"} variant="secondary" onClick={zoomIn} title="Zoom In">
+          <Button
+            size={isMobile ? "sm" : "sm"}
+            variant="secondary"
+            onClick={zoomIn}
+            title="Zoom In"
+            className="bg-white/90 hover:bg-white shadow-lg"
+          >
             <ZoomIn className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
           </Button>
-          <Button size={isMobile ? "sm" : "sm"} variant="secondary" onClick={zoomOut} title="Zoom Out">
+          <Button
+            size={isMobile ? "sm" : "sm"}
+            variant="secondary"
+            onClick={zoomOut}
+            title="Zoom Out"
+            className="bg-white/90 hover:bg-white shadow-lg"
+          >
             <ZoomOut className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
           </Button>
+          {!compact && (
+            <>
+              <Button
+                size={isMobile ? "sm" : "sm"}
+                variant="secondary"
+                onClick={toggleAutoRotate}
+                title={autoRotate ? "Pause Rotation" : "Start Rotation"}
+                className="bg-white/90 hover:bg-white shadow-lg"
+              >
+                {autoRotate ? (
+                  <Pause className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
+                ) : (
+                  <Play className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
+                )}
+              </Button>
+              <Button
+                size={isMobile ? "sm" : "sm"}
+                variant="secondary"
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                className="bg-white/90 hover:bg-white shadow-lg"
+              >
+                {isFullscreen ? (
+                  <Minimize2 className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
+                ) : (
+                  <Maximize2 className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
+                )}
+              </Button>
+            </>
+          )}
         </div>
-      )}
 
-      <div
-        className={`absolute bottom-2 md:bottom-4 left-2 md:left-4 bg-black/50 text-white px-2 md:px-3 py-1 rounded ${isMobile ? "text-xs" : "text-sm"}`}
-      >
-        <div className="flex items-center gap-1 md:gap-2">
-          <Move3D className={`${isMobile ? "h-2 w-2" : "h-3 w-3"}`} />
-          <span>
-            {isMobile ? "Touch to rotate • Pinch to zoom" : "Click and drag to rotate • Scroll to zoom • Auto-rotating"}
-          </span>
+        {/* Enhanced Status Bar */}
+        <div
+          className={`absolute bottom-2 left-2 right-2 flex ${
+            isMobile ? "flex-col gap-2" : "flex-row justify-between items-center"
+          }`}
+        >
+          <div
+            className={`bg-black/60 text-white px-3 py-2 rounded-lg backdrop-blur-sm ${
+              isMobile ? "text-xs" : "text-sm"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Move3D className={`${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
+              <span>
+                {hasTouchScreen ? "Touch to rotate • Pinch to zoom" : "Click and drag to rotate • Scroll to zoom"}
+              </span>
+            </div>
+          </div>
+
+          {!isMobile && (
+            <div className="flex gap-2">
+              <Badge variant="secondary" className="text-xs">
+                Quality: {renderQuality.toUpperCase()}
+              </Badge>
+              {autoRotate && (
+                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                  Auto-rotating
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
-      </div>
-    </div>
+
+        {/* Mobile-specific quality indicator */}
+        {isMobile && (
+          <div className="absolute top-2 left-2">
+            <Badge
+              variant={renderQuality === "low" ? "destructive" : renderQuality === "medium" ? "default" : "secondary"}
+              className="text-xs"
+            >
+              {renderQuality.toUpperCase()}
+            </Badge>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

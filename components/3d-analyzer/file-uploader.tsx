@@ -5,19 +5,16 @@ import { useDropzone } from "react-dropzone"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Upload, File, CheckCircle, AlertCircle, X } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Upload, File, CheckCircle, AlertCircle, X, Smartphone, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMediaQuery } from "@/hooks/use-media-query"
+import { useDeviceCapabilities } from "@/hooks/use-device-capabilities"
 import type { ModelData } from "./types"
 
 interface FileUploaderProps {
   onFileUpload: (modelData: ModelData) => void
-}
-
-declare global {
-  interface Window {
-    THREE: any
-  }
 }
 
 export default function FileUploader({ onFileUpload }: FileUploaderProps) {
@@ -25,7 +22,10 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [processingStage, setProcessingStage] = useState<string>("")
+
   const isMobile = useMediaQuery("(max-width: 768px)")
+  const { isLowEndDevice, hasTouchScreen } = useDeviceCapabilities()
 
   const parseSTLBinary = useCallback((buffer: ArrayBuffer) => {
     const view = new DataView(buffer)
@@ -149,6 +149,7 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
 
         reader.onload = async (event) => {
           try {
+            setProcessingStage("Reading file...")
             const buffer = event.target?.result as ArrayBuffer
 
             // Check if it's binary or ASCII STL
@@ -156,6 +157,7 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
             const header = new TextDecoder().decode(view.slice(0, 80))
             const isBinary = !header.toLowerCase().includes("solid")
 
+            setProcessingStage("Parsing geometry...")
             let parseResult
 
             if (isBinary) {
@@ -167,6 +169,7 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
 
             const { vertices, normals, triangleCount } = parseResult
 
+            setProcessingStage("Calculating bounds...")
             // Calculate bounding box
             let minX = Number.POSITIVE_INFINITY,
               minY = Number.POSITIVE_INFINITY,
@@ -187,10 +190,12 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
               maxZ = Math.max(maxZ, z)
             }
 
+            setProcessingStage("Computing volume...")
             // Calculate volume and surface area
             const volume = Math.max(calculateMeshVolume(vertices), 0.1)
             const surfaceArea = calculateSurfaceArea(vertices)
 
+            setProcessingStage("Finalizing...")
             // Create a simple geometry object for Three.js
             const geometry = {
               vertices,
@@ -238,23 +243,28 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
       setUploadedFile(file)
       setIsProcessing(true)
       setUploadProgress(0)
+      setProcessingStage("Starting upload...")
 
       try {
-        // Simulate upload progress
-        const progressInterval = setInterval(() => {
-          setUploadProgress((prev) => {
-            if (prev >= 90) {
-              clearInterval(progressInterval)
-              return 90
-            }
-            return prev + 10
-          })
-        }, 200)
+        // Enhanced progress simulation with stages
+        const stages = [
+          { progress: 20, stage: "Uploading file..." },
+          { progress: 40, stage: "Validating format..." },
+          { progress: 60, stage: "Processing geometry..." },
+          { progress: 80, stage: "Computing metrics..." },
+          { progress: 95, stage: "Finalizing..." },
+        ]
+
+        for (const { progress, stage } of stages) {
+          setUploadProgress(progress)
+          setProcessingStage(stage)
+          await new Promise((resolve) => setTimeout(resolve, isLowEndDevice ? 400 : 300))
+        }
 
         const modelData = await processSTLFile(file)
 
-        clearInterval(progressInterval)
         setUploadProgress(100)
+        setProcessingStage("Complete!")
 
         setTimeout(() => {
           onFileUpload(modelData)
@@ -264,9 +274,10 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
         setError(err instanceof Error ? err.message : "An error occurred while processing the file")
         setIsProcessing(false)
         setUploadProgress(0)
+        setProcessingStage("")
       }
     },
-    [processSTLFile, onFileUpload],
+    [processSTLFile, onFileUpload, isLowEndDevice],
   )
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -284,81 +295,159 @@ export default function FileUploader({ onFileUpload }: FileUploaderProps) {
     setUploadedFile(null)
     setUploadProgress(0)
     setError(null)
+    setProcessingStage("")
   }
 
   return (
     <div className="space-y-4">
-      <div
-        {...getRootProps()}
-        className={cn(
-          "border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors",
-          isMobile ? "p-6" : "p-8",
-          isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25",
-          isProcessing && "pointer-events-none opacity-50",
-        )}
-      >
-        <input {...getInputProps()} />
-
-        <div className="flex flex-col items-center space-y-4">
-          <div className={`p-3 md:p-4 rounded-full bg-muted`}>
-            <Upload className={`${isMobile ? "h-6 w-6" : "h-8 w-8"} text-muted-foreground`} />
-          </div>
-
-          <div>
-            <p className={`${isMobile ? "text-base" : "text-lg"} font-medium`}>
-              {isDragActive ? "Drop your file here" : "Drag & drop your 3D model"}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">or tap to browse files</p>
-          </div>
-
-          <Button variant="outline" disabled={isProcessing} size={isMobile ? "sm" : "default"}>
-            Choose File
-          </Button>
-
-          <p className="text-xs text-muted-foreground">Supports STL files up to 50MB</p>
-        </div>
-      </div>
-
-      {uploadedFile && (
-        <div className="bg-muted/50 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-2 min-w-0 flex-1">
-              <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-sm font-medium truncate">{uploadedFile.name}</span>
-              <span className="text-xs text-muted-foreground flex-shrink-0">
-                ({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)
-              </span>
-            </div>
-
-            {!isProcessing && (
-              <Button variant="ghost" size="sm" onClick={removeFile}>
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-
-          {isProcessing && (
-            <div className="space-y-2">
-              <Progress value={uploadProgress} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                {uploadProgress < 90 ? "Uploading..." : "Processing 3D model..."}
-              </p>
-            </div>
+      {/* Device capabilities indicator */}
+      {(hasTouchScreen || isLowEndDevice) && (
+        <div className="flex gap-2 mb-4">
+          {hasTouchScreen && (
+            <Badge variant="secondary" className="text-xs">
+              <Smartphone className="h-3 w-3 mr-1" />
+              Touch Optimized
+            </Badge>
           )}
-
-          {uploadProgress === 100 && !isProcessing && (
-            <div className="flex items-center space-x-2 text-green-600">
-              <CheckCircle className="h-4 w-4" />
-              <span className="text-sm">File processed successfully!</span>
-            </div>
+          {isLowEndDevice && (
+            <Badge variant="outline" className="text-xs">
+              <Zap className="h-3 w-3 mr-1" />
+              Performance Mode
+            </Badge>
           )}
         </div>
       )}
 
+      {/* Enhanced upload area */}
+      <Card
+        className={cn(
+          "border-2 border-dashed transition-all duration-200",
+          isDragActive ? "border-primary bg-primary/5 scale-[1.02]" : "border-muted-foreground/25",
+          isProcessing && "pointer-events-none opacity-50",
+        )}
+      >
+        <CardContent
+          {...getRootProps()}
+          className={cn("cursor-pointer text-center transition-colors", isMobile ? "p-6" : "p-8")}
+        >
+          <input {...getInputProps()} />
+
+          <div className="flex flex-col items-center space-y-4">
+            <div
+              className={cn(
+                "rounded-full transition-all duration-200",
+                isMobile ? "p-4" : "p-6",
+                isDragActive ? "bg-primary/20 scale-110" : "bg-muted",
+              )}
+            >
+              <Upload
+                className={cn(
+                  "text-muted-foreground transition-all duration-200",
+                  isMobile ? "h-8 w-8" : "h-10 w-10",
+                  isDragActive && "text-primary scale-110",
+                )}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <h3
+                className={cn(
+                  "font-semibold transition-colors",
+                  isMobile ? "text-lg" : "text-xl",
+                  isDragActive && "text-primary",
+                )}
+              >
+                {isDragActive ? "Drop your file here" : "Upload your 3D model"}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {hasTouchScreen ? "Tap to browse files" : "Drag & drop or click to browse"}
+              </p>
+            </div>
+
+            <Button
+              variant={isDragActive ? "default" : "outline"}
+              disabled={isProcessing}
+              size={isMobile ? "default" : "lg"}
+              className="transition-all duration-200"
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Choose File
+            </Button>
+
+            <div className="text-center space-y-1">
+              <p className="text-xs text-muted-foreground">Supports STL files up to 50MB</p>
+              {isLowEndDevice && (
+                <p className="text-xs text-orange-600">Large files may take longer to process on this device</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Enhanced file status */}
+      {uploadedFile && (
+        <Card className="bg-muted/30">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-3 min-w-0 flex-1">
+                <div className="p-2 rounded-full bg-primary/10">
+                  <File className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{uploadedFile.name}</p>
+                  <p className="text-xs text-muted-foreground">{(uploadedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
+              </div>
+
+              {!isProcessing && (
+                <Button variant="ghost" size="sm" onClick={removeFile}>
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+
+            {isProcessing && (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">{processingStage}</span>
+                    <span className="text-sm text-muted-foreground">{uploadProgress}%</span>
+                  </div>
+                  <Progress value={uploadProgress} className="h-2" />
+                </div>
+
+                {isMobile && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Processing may take a moment on mobile devices
+                  </p>
+                )}
+              </div>
+            )}
+
+            {uploadProgress === 100 && !isProcessing && (
+              <div className="flex items-center space-x-2 text-green-600">
+                <CheckCircle className="h-4 w-4" />
+                <span className="text-sm font-medium">File processed successfully!</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Enhanced error display */}
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="text-sm">{error}</AlertDescription>
+          <AlertDescription className="text-sm">
+            <div className="space-y-2">
+              <p>{error}</p>
+              {isMobile && (
+                <p className="text-xs opacity-80">
+                  Try using a smaller file or ensure your device has sufficient memory.
+                </p>
+              )}
+            </div>
+          </AlertDescription>
         </Alert>
       )}
     </div>
